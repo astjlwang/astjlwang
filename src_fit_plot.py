@@ -32,6 +32,28 @@ def _resolve_param(model, candidate_names):
     )
 
 
+def _set_par_value(par_expr, value, freeze=False):
+    try:
+        par = ui.get_par(par_expr)
+    except Exception:
+        return False
+
+    val = value
+    if par.min is not None:
+        val = max(par.min, val)
+    if par.max is not None:
+        val = min(par.max, val)
+
+    ui.set_par(par_expr, val)
+
+    if freeze:
+        ui.freeze(par_expr)
+    else:
+        ui.thaw(par_expr)
+
+    return True
+
+
 def _thaw_params(param_specs):
     thawed = []
     for model, names in param_specs:
@@ -51,22 +73,22 @@ def _fit_stage(stage_label, param_specs):
 
 
 def _reset_source_initials():
-    SrcAbs.nH = 2.0
-    SrcAbs.nH.freeze()
+    _set_par_value('SrcAbs.nH', 2.0, freeze=True)
 
-    SrcNEI.norm = 1e-4
+    _set_par_value('SrcNEI.norm', 1e-4, freeze=False)
+    _set_par_value('SrcNEI.kT', 0.8, freeze=True)
 
-    SrcNEI.kT = 0.8
-    SrcNEI.kT.freeze()
-
-    tau_param = _resolve_param(SrcNEI, ['Tau', 'tau', 'Tau_u', 'Tau_l'])
-    tau_param.val = min(max(3e13, tau_param.min), tau_param.max)
-    tau_param.freeze()
+    for tau_name in ['SrcNEI.Tau', 'SrcNEI.tau', 'SrcNEI.Tau_u', 'SrcNEI.Tau_l']:
+        if _set_par_value(tau_name, 3e13, freeze=True):
+            break
 
     for par_name in ['Mg', 'Si', 'S', 'Ar', 'Ca']:
-        if hasattr(SrcNEI, par_name):
-            getattr(SrcNEI, par_name).val = 1.0
-            getattr(SrcNEI, par_name).freeze()
+        _set_par_value(f'SrcNEI.{par_name}', 1.0, freeze=True)
+
+    _set_par_value('Src_InstLine_3.norm', 1e-5, freeze=False)
+    _set_par_value('Src_InstLine_3.LineE', 1.245, freeze=False)
+    _set_par_value('InstLine_1.norm', 1e-5, freeze=False)
+    _set_par_value('InstLine_2.norm', 1e-5, freeze=False)
 
 
 def fit_and_plot_source():
