@@ -379,7 +379,15 @@ def fit_and_plot_source():
     y = plot.dataplot.y
     yerr = plot.dataplot.yerr
     ax_main.errorbar(
-        x, y, yerr=yerr, fmt='o', ms=3.5, capsize=2, color='#1f77b4', label='SRC data'
+        x,
+        y,
+        yerr=yerr,
+        fmt='o',
+        ms=2.2,
+        capsize=2,
+        color='#1f77b4',
+        alpha=0.9,
+        label='SRC data',
     )
 
     m = plot.modelplot
@@ -390,11 +398,11 @@ def fit_and_plot_source():
         model_y_extended,
         where='pre',
         color='#ff7f0e',
-        linewidth=1.2,
+        linewidth=2.0,
         label='Full model',
     )
 
-    def _component_curve(component_expr, color, label=None):
+    def _component_curve(component_expr, color, label=None, linewidth=0.9, alpha=0.6):
         ui.set_source('SRC_1', component_expr)
         comp_plot = ui.get_fit_plot('SRC_1')
         comp_model = comp_plot.modelplot
@@ -409,23 +417,24 @@ def fit_and_plot_source():
             comp_y_extended,
             where='pre',
             color=color,
-            linewidth=1.4,
+            linewidth=linewidth,
+            alpha=alpha,
             label=label,
         )
         ui.set_source('SRC_1', full_src_model)
         ui.get_fit_plot('SRC_1')
 
-    _component_curve(SrcAbs * SrcNEI1, 'purple', 'SrcAbs * SrcNEI1')
-    _component_curve(SrcAbs * SrcNEI2, 'teal', 'SrcAbs * SrcNEI2')
+    _component_curve(SrcAbs * SrcNEI1, 'purple', 'SrcAbs * SrcNEI1', linewidth=0.8, alpha=0.5)
+    _component_curve(SrcAbs * SrcNEI2, 'teal', 'SrcAbs * SrcNEI2', linewidth=0.8, alpha=0.5)
 
     gaussian_components = [
-        (sky_scale_src * InstLine_1, 'Instrumental lines'),
-        (sky_scale_src * InstLine_2, None),
-        (Src_InstLine_3, None),
+        (sky_scale_src * InstLine_1, 'Instrumental lines', 0.7),
+        (sky_scale_src * InstLine_2, None, 0.7),
+        (Src_InstLine_3, None, 0.7),
     ]
 
-    for comp_expr, lbl in gaussian_components:
-        _component_curve(comp_expr, '#7f7f7f', lbl)
+    for comp_expr, lbl, lw in gaussian_components:
+        _component_curve(comp_expr, '#7f7f7f', lbl, linewidth=lw, alpha=0.45)
 
     ax_main.set_xscale('linear')
     ax_main.set_yscale('log')
