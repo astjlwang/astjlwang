@@ -18,6 +18,38 @@ import matplotlib.pyplot as plt
 from sherpa.astro import ui
 
 
+def _resolve_param(model, candidate_names):
+    for name in candidate_names:
+        for par in getattr(model, 'pars', []):
+            if par.name.lower() == name.lower():
+                return par
+        if hasattr(model, name):
+            attr = getattr(model, name)
+            if hasattr(attr, 'thaw'):
+                return attr
+    raise AttributeError(
+        f"Parameter {candidate_names} not found on model {getattr(model, 'name', model)}"
+    )
+
+
+def _thaw_params(param_specs):
+    thawed = []
+    for model, names in param_specs:
+        for par in names:
+            resolved = _resolve_param(model, par if isinstance(par, (list, tuple)) else [par])
+            resolved.thaw()
+            thawed.append(resolved.name)
+    return thawed
+
+
+def _fit_stage(stage_label, param_specs):
+    thawed_names = _thaw_params(param_specs)
+    print(f"\n--- {stage_label} ---")
+    print("Thawed parameters: " + ", ".join(thawed_names))
+    ui.fit('SRC_1')
+    ui.show_model('SRC_1')
+
+
 def fit_and_plot_source():
     # ---------- 8. 加载源谱 ----------
     ui.load_pha('SRC_1', src_pi, use_errors=True)
@@ -55,7 +87,7 @@ def fit_and_plot_source():
     # 源的吸收模型（tbabs），允许在 1.0–3.0 ×10^22 cm^-2 范围内自由变化
     ui.create_model_component('xstbabs', 'SrcAbs')
     SrcAbs.nH.set(val=2.0, min=1.0, max=3.0)  # 初始值2.0，自由范围1–3
-    SrcAbs.nH.thaw()  # 允许自由拟合
+    SrcAbs.nH.freeze()
 
     ui.create_model_component('xsvrnei', 'SrcNEI')
     SrcNEI.norm = 1e-4
@@ -64,11 +96,15 @@ def fit_and_plot_source():
     SrcNEI.kT_init.set(val=5.0, min=0.3, max=10.0)
     SrcNEI.KT_init.freeze()
 
-    SrcNEI.Mg.thaw()
-    SrcNEI.Si.thaw()
-    SrcNEI.S.thaw()
-    SrcNEI.Ar.thaw()
-    SrcNEI.Ca.thaw()
+    SrcNEI.kT.freeze()
+    try:
+        SrcNEI.Tau.freeze()
+    except AttributeError:
+        _resolve_param(SrcNEI, ['Tau', 'tau', 'Tau_u', 'Tau_l']).freeze()
+
+    for par_name in ['Mg', 'Si', 'S', 'Ar', 'Ca']:
+        if hasattr(SrcNEI, par_name):
+            getattr(SrcNEI, par_name).freeze()
 
     ui.create_model_component('xsgaussian', 'Src_InstLine_3')
     Src_InstLine_3.LineE.set(val=1.245, min=1.22, max=1.27)
@@ -84,11 +120,27 @@ def fit_and_plot_source():
     ui.set_source('SRC_1', full_src_model)
 
     # ---------- 10. 源拟合 ----------
-    print("\nFitting source (with scaled sky, SoftProton free, 0.5–6.0 keV)...")
     ui.set_stat('chi2gehrels')
     ui.set_method('levmar')
+    print("\nInitial fit with all relevant SrcAbs/SrcNEI parameters frozen...")
     ui.fit('SRC_1')
     ui.show_model('SRC_1')
+
+    stage1_params = [
+        (SrcAbs, ['nH']),
+        (SrcNEI, ['kT']),
+        (SrcNEI, [['Tau', 'tau', 'Tau_u', 'Tau_l']]),
+        (SrcNEI, ['S']),
+        (SrcNEI, ['Si']),
+    ]
+
+    stage2_params = [
+        (SrcNEI, ['Ar']),
+        (SrcNEI, ['Mg']),
+    ]
+
+    _fit_stage("Stage 1: thaw nH, kT, Tau, S, Si", stage1_params)
+    _fit_stage("Stage 2: thaw Ar, Mg", stage2_params)
 
     # ---------- 11. 绘图 ----------
     fig = plt.figure(figsize=(6, 6))
@@ -117,11 +169,8 @@ def fit_and_plot_source():
     )
 
     def _component_curve(component_expr, color, label):
-        ui.set_source('SRC_1', component_expr)
-        comp_plot = ui.get_fit_plot('SRC_1')
-        comp_model = comp_plot.modelplot
+        comp_model = ui.eval_model_to_plot('SRC_1', component_expr)
         if comp_model.y.size == 0:
-            ui.set_source('SRC_1', full_src_model)
             return
         comp_edge = np.hstack([comp_model.xlo[0], comp_model.xhi])
         comp_y_extended = np.hstack([comp_model.y[0], comp_model.y])
@@ -133,8 +182,6 @@ def fit_and_plot_source():
             linewidth=1.4,
             label=label,
         )
-        ui.set_source('SRC_1', full_src_model)
-        ui.get_fit_plot('SRC_1')  # refresh caches for the full model
 
     _component_curve(SrcAbs * SrcNEI, '#d62728', 'SrcAbs * SrcNEI')
     _component_curve(Src_InstLine_3, '#2ca02c', 'Src_InstLine_3')
@@ -142,8 +189,8 @@ def fit_and_plot_source():
     ax_main.set_xscale('linear')
     ax_main.set_yscale('log')
     ax_main.set_ylabel('Counts / keV')
-    ax_main.legend(loc='best', fontsize=9)
     ax_main.set_xlim(0.5, 6.0)
+    ax_main.legend(loc='best', fontsize=9)
 
     delchi = ui.get_delchi_plot('SRC_1')
     ax_del.errorbar(
