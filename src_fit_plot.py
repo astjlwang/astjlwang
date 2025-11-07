@@ -87,16 +87,12 @@ def fit_and_plot_source():
     # 源的吸收模型（tbabs），允许在 1.0–3.0 ×10^22 cm^-2 范围内自由变化
     ui.create_model_component('xstbabs', 'SrcAbs')
     SrcAbs.nH.set(val=2.0, min=1.0, max=3.0)  # 初始值2.0，自由范围1–3
-    SrcAbs.nH.default_step = 0.001
-    SrcAbs.nH.delta = 0.001
     SrcAbs.nH.freeze()
 
     ui.create_model_component('xsvrnei', 'SrcNEI')
     SrcNEI.norm = 1e-4
 
     SrcNEI.kT.set(val=0.8, min=0.3, max=3.0)
-    SrcNEI.kT.default_step = 0.001
-    SrcNEI.kT.delta = 0.001
     SrcNEI.kT_init.set(val=5.0, min=0.3, max=10.0)
     SrcNEI.KT_init.freeze()
 
@@ -172,26 +168,26 @@ def fit_and_plot_source():
         label='Full model',
     )
 
-    def _component_curve(component_expr, color, label=None, linestyle='-'):
-        ui.plot_model('SRC_1', model=component_expr, clearwindow=False)
-        comp_plot = ui.get_model_plot('SRC_1')
-        if comp_plot.y.size == 0:
+    def _component_curve(component_expr, color, label=None):
+        ui.set_source('SRC_1', component_expr)
+        comp_plot = ui.get_fit_plot('SRC_1')
+        comp_model = comp_plot.modelplot
+        if comp_model.y.size == 0:
+            ui.set_source('SRC_1', full_src_model)
+            ui.get_fit_plot('SRC_1')
             return
-        comp_edge = np.hstack([comp_plot.xlo[0], comp_plot.xhi])
-        comp_y_extended = np.hstack([comp_plot.y[0], comp_plot.y])
+        comp_edge = np.hstack([comp_model.xlo[0], comp_model.xhi])
+        comp_y_extended = np.hstack([comp_model.y[0], comp_model.y])
         ax_main.step(
             comp_edge,
             comp_y_extended,
             where='pre',
             color=color,
             linewidth=1.4,
-            linestyle=linestyle,
             label=label,
         )
-        for fnum in list(plt.get_fignums()):
-            if fnum != fig.number:
-                plt.close(fnum)
-        plt.sca(ax_main)
+        ui.set_source('SRC_1', full_src_model)
+        ui.get_fit_plot('SRC_1')
 
     _component_curve(SrcAbs * SrcNEI, 'purple', 'SrcAbs * SrcNEI')
 
