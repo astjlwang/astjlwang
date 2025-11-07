@@ -33,6 +33,7 @@ def _resolve_param(model, candidate_names):
 
 
 def _set_par_value(par_expr, value, freeze=False):
+    # 中文注释：统一封装参数赋值与冻结逻辑，确保每次拟合前参数都能复位
     try:
         par = ui.get_par(par_expr)
     except Exception:
@@ -73,6 +74,7 @@ def _fit_stage(stage_label, param_specs):
 
 
 def _reset_source_initials():
+    # 中文注释：在设置完整模型后调用，逐一把感兴趣参数重置到初始值
     _set_par_value('SrcAbs.nH', 2.0, freeze=True)
 
     _set_par_value('SrcNEI.norm', 1e-4, freeze=False)
@@ -171,6 +173,7 @@ def fit_and_plot_source():
     ui.show_model('SRC_1')
 
     stage1_params = [
+        # 中文注释：阶段一解冻 nH、kT、Tau 以及 Si/S，模拟逐步放参
         (SrcAbs, ['nH']),
         (SrcNEI, ['kT']),
         (SrcNEI, [['Tau', 'tau', 'Tau_u', 'Tau_l']]),
@@ -179,6 +182,7 @@ def fit_and_plot_source():
     ]
 
     stage2_params = [
+        # 中文注释：阶段二接着解冻 Ar/Ca，阶段一已经解冻的参数保持自由
         (SrcNEI, ['Ar']),
         (SrcNEI, ['Ca']),
     ]
@@ -212,16 +216,21 @@ def fit_and_plot_source():
         label='Full model',
     )
 
+    pha_data = ui.get_data('SRC_1')
+    pha_mask = getattr(pha_data, 'mask', None)
+
     def _component_curve(component_expr, color, label=None, linestyle='-'):
-        restored = False
-        try:
-            comp_plot = ui.get_model_component_plot('SRC_1', component_expr)
-        except Exception:
-            ui.set_source('SRC_1', component_expr)
-            comp_plot = ui.get_model_plot('SRC_1')
-            restored = True
-        comp_edge = np.hstack([comp_plot.xlo[0], comp_plot.xhi])
-        comp_y_extended = np.hstack([comp_plot.y[0], comp_plot.y])
+        # 中文注释：使用 calc_model_component 直接评估子模型，避免重新 set_source
+        comp_vals = np.asarray(ui.calc_model_component('SRC_1', component_expr))
+
+        if pha_mask is not None and comp_vals.shape[0] == pha_mask.shape[0]:
+            comp_vals = comp_vals[pha_mask]
+
+        if comp_vals.size == 0:
+            return
+
+        comp_edge = np.hstack([m.xlo[0], m.xhi])
+        comp_y_extended = np.hstack([comp_vals[0], comp_vals])
         ax_main.step(
             comp_edge,
             comp_y_extended,
@@ -231,9 +240,6 @@ def fit_and_plot_source():
             linestyle=linestyle,
             label=label,
         )
-        if restored:
-            ui.set_source('SRC_1', full_src_model)
-            ui.get_fit_plot('SRC_1')
 
     _component_curve(SrcAbs * SrcNEI, 'purple', 'SrcAbs * SrcNEI')
 
