@@ -87,12 +87,16 @@ def fit_and_plot_source():
     # 源的吸收模型（tbabs），允许在 1.0–3.0 ×10^22 cm^-2 范围内自由变化
     ui.create_model_component('xstbabs', 'SrcAbs')
     SrcAbs.nH.set(val=2.0, min=1.0, max=3.0)  # 初始值2.0，自由范围1–3
+    SrcAbs.nH.default_step = 0.001
+    SrcAbs.nH.delta = 0.001
     SrcAbs.nH.freeze()
 
     ui.create_model_component('xsvrnei', 'SrcNEI')
     SrcNEI.norm = 1e-4
 
     SrcNEI.kT.set(val=0.8, min=0.3, max=3.0)
+    SrcNEI.kT.default_step = 0.001
+    SrcNEI.kT.delta = 0.001
     SrcNEI.kT_init.set(val=5.0, min=0.3, max=10.0)
     SrcNEI.KT_init.freeze()
 
@@ -168,17 +172,11 @@ def fit_and_plot_source():
         label='Full model',
     )
 
-    src_components = getattr(m, 'components', [])
-    nei_component = None
-    gauss_component = None
-    for comp in src_components:
-        name = getattr(comp, 'name', '')
-        if nei_component is None and 'SrcAbs' in name and 'SrcNEI' in name:
-            nei_component = comp
-        if gauss_component is None and 'Src_InstLine_3' in name:
-            gauss_component = comp
-
-    def _step_component(comp_plot, color, label):
+    def _component_curve(component_expr, color, label=None, linestyle='-'):
+        ui.plot_model('SRC_1', model=component_expr, clearwindow=False)
+        comp_plot = ui.get_model_plot('SRC_1')
+        if comp_plot.y.size == 0:
+            return
         comp_edge = np.hstack([comp_plot.xlo[0], comp_plot.xhi])
         comp_y_extended = np.hstack([comp_plot.y[0], comp_plot.y])
         ax_main.step(
@@ -187,18 +185,24 @@ def fit_and_plot_source():
             where='pre',
             color=color,
             linewidth=1.4,
+            linestyle=linestyle,
             label=label,
         )
+        for fnum in list(plt.get_fignums()):
+            if fnum != fig.number:
+                plt.close(fnum)
+        plt.sca(ax_main)
 
-    if nei_component is not None:
-        _step_component(nei_component, '#d62728', 'SrcAbs * SrcNEI')
-    else:
-        print("Warning: SrcAbs*SrcNEI component not found in model plot components.")
+    _component_curve(SrcAbs * SrcNEI, 'purple', 'SrcAbs * SrcNEI')
 
-    if gauss_component is not None:
-        _step_component(gauss_component, '#2ca02c', 'Src_InstLine_3')
-    else:
-        print("Warning: Src_InstLine_3 component not found in model plot components.")
+    gaussian_components = [
+        (sky_scale_src * InstLine_1, 'Instrumental lines'),
+        (sky_scale_src * InstLine_2, None),
+        (Src_InstLine_3, None),
+    ]
+
+    for comp_expr, lbl in gaussian_components:
+        _component_curve(comp_expr, '#7f7f7f', lbl)
 
     ax_main.set_xscale('linear')
     ax_main.set_yscale('log')
