@@ -168,12 +168,19 @@ def fit_and_plot_source():
         label='Full model',
     )
 
-    def _component_curve(component_expr, color, label):
-        comp_model = ui.eval_model_to_plot('SRC_1', component_expr)
-        if comp_model.y.size == 0:
-            return
-        comp_edge = np.hstack([comp_model.xlo[0], comp_model.xhi])
-        comp_y_extended = np.hstack([comp_model.y[0], comp_model.y])
+    src_components = getattr(m, 'components', [])
+    nei_component = None
+    gauss_component = None
+    for comp in src_components:
+        name = getattr(comp, 'name', '')
+        if nei_component is None and 'SrcAbs' in name and 'SrcNEI' in name:
+            nei_component = comp
+        if gauss_component is None and 'Src_InstLine_3' in name:
+            gauss_component = comp
+
+    def _step_component(comp_plot, color, label):
+        comp_edge = np.hstack([comp_plot.xlo[0], comp_plot.xhi])
+        comp_y_extended = np.hstack([comp_plot.y[0], comp_plot.y])
         ax_main.step(
             comp_edge,
             comp_y_extended,
@@ -183,8 +190,15 @@ def fit_and_plot_source():
             label=label,
         )
 
-    _component_curve(SrcAbs * SrcNEI, '#d62728', 'SrcAbs * SrcNEI')
-    _component_curve(Src_InstLine_3, '#2ca02c', 'Src_InstLine_3')
+    if nei_component is not None:
+        _step_component(nei_component, '#d62728', 'SrcAbs * SrcNEI')
+    else:
+        print("Warning: SrcAbs*SrcNEI component not found in model plot components.")
+
+    if gauss_component is not None:
+        _step_component(gauss_component, '#2ca02c', 'Src_InstLine_3')
+    else:
+        print("Warning: Src_InstLine_3 component not found in model plot components.")
 
     ax_main.set_xscale('linear')
     ax_main.set_yscale('log')
