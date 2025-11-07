@@ -50,6 +50,25 @@ def _fit_stage(stage_label, param_specs):
     ui.show_model('SRC_1')
 
 
+def _reset_source_initials():
+    SrcAbs.nH = 2.0
+    SrcAbs.nH.freeze()
+
+    SrcNEI.norm = 1e-4
+
+    SrcNEI.kT = 0.8
+    SrcNEI.kT.freeze()
+
+    tau_param = _resolve_param(SrcNEI, ['Tau', 'tau', 'Tau_u', 'Tau_l'])
+    tau_param.val = min(max(3e13, tau_param.min), tau_param.max)
+    tau_param.freeze()
+
+    for par_name in ['Mg', 'Si', 'S', 'Ar', 'Ca']:
+        if hasattr(SrcNEI, par_name):
+            getattr(SrcNEI, par_name).val = 1.0
+            getattr(SrcNEI, par_name).freeze()
+
+
 def fit_and_plot_source():
     # ---------- 8. 加载源谱 ----------
     ui.load_pha('SRC_1', src_pi, use_errors=True)
@@ -117,6 +136,9 @@ def fit_and_plot_source():
     full_src_model = sky_scale_src * (
         LHB + SkyAbs * (MWhalo + CXB) + InstLine_1 + InstLine_2 + SoftProton
     ) + SrcAbs * SrcNEI + Src_InstLine_3
+
+    _reset_source_initials()
+
     ui.set_source('SRC_1', full_src_model)
 
     # ---------- 10. 源拟合 ----------
@@ -168,37 +190,30 @@ def fit_and_plot_source():
         label='Full model',
     )
 
-    def _component_curve(component_expr, color, label=None):
-        ui.set_source('SRC_1', component_expr)
-        comp_plot = ui.get_fit_plot('SRC_1')
-        comp_model = comp_plot.modelplot
-        if comp_model.y.size == 0:
-            ui.set_source('SRC_1', full_src_model)
-            ui.get_fit_plot('SRC_1')
-            return
-        comp_edge = np.hstack([comp_model.xlo[0], comp_model.xhi])
-        comp_y_extended = np.hstack([comp_model.y[0], comp_model.y])
+    component_plots = getattr(m, 'components', [])
+
+    def _step_component(comp_plot, color, label=None, linestyle='-'):
+        comp_edge = np.hstack([comp_plot.xlo[0], comp_plot.xhi])
+        comp_y_extended = np.hstack([comp_plot.y[0], comp_plot.y])
         ax_main.step(
             comp_edge,
             comp_y_extended,
             where='pre',
             color=color,
             linewidth=1.4,
+            linestyle=linestyle,
             label=label,
         )
-        ui.set_source('SRC_1', full_src_model)
-        ui.get_fit_plot('SRC_1')
 
-    _component_curve(SrcAbs * SrcNEI, 'purple', 'SrcAbs * SrcNEI')
-
-    gaussian_components = [
-        (sky_scale_src * InstLine_1, 'Instrumental lines'),
-        (sky_scale_src * InstLine_2, None),
-        (Src_InstLine_3, None),
-    ]
-
-    for comp_expr, lbl in gaussian_components:
-        _component_curve(comp_expr, '#7f7f7f', lbl)
+    has_inst_label = False
+    for comp in component_plots:
+        name = getattr(comp, 'name', '')
+        if 'SrcAbs' in name and 'SrcNEI' in name:
+            _step_component(comp, 'purple', 'SrcAbs * SrcNEI')
+        elif any(tag in name for tag in ['InstLine_1', 'InstLine_2', 'Src_InstLine_3']):
+            label = 'Instrumental lines' if not has_inst_label else None
+            has_inst_label = True
+            _step_component(comp, '#7f7f7f', label, linestyle='--')
 
     ax_main.set_xscale('linear')
     ax_main.set_yscale('log')
