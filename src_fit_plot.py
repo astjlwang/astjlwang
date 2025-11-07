@@ -159,9 +159,9 @@ def fit_and_plot_source():
         LHB + SkyAbs * (MWhalo + CXB) + InstLine_1 + InstLine_2 + SoftProton
     ) + SrcAbs * SrcNEI + Src_InstLine_3
 
-    _reset_source_initials()
-
     ui.set_source('SRC_1', full_src_model)
+
+    _reset_source_initials()
 
     # ---------- 10. 源拟合 ----------
     ui.set_stat('chi2gehrels')
@@ -180,11 +180,11 @@ def fit_and_plot_source():
 
     stage2_params = [
         (SrcNEI, ['Ar']),
-        (SrcNEI, ['Mg']),
+        (SrcNEI, ['Ca']),
     ]
 
     _fit_stage("Stage 1: thaw nH, kT, Tau, S, Si", stage1_params)
-    _fit_stage("Stage 2: thaw Ar, Mg", stage2_params)
+    _fit_stage("Stage 2: thaw Ar, Ca", stage2_params)
 
     # ---------- 11. 绘图 ----------
     fig = plt.figure(figsize=(6, 6))
@@ -212,9 +212,14 @@ def fit_and_plot_source():
         label='Full model',
     )
 
-    component_plots = getattr(m, 'components', [])
-
-    def _step_component(comp_plot, color, label=None, linestyle='-'):
+    def _component_curve(component_expr, color, label=None, linestyle='-'):
+        restored = False
+        try:
+            comp_plot = ui.get_model_component_plot('SRC_1', component_expr)
+        except Exception:
+            ui.set_source('SRC_1', component_expr)
+            comp_plot = ui.get_model_plot('SRC_1')
+            restored = True
         comp_edge = np.hstack([comp_plot.xlo[0], comp_plot.xhi])
         comp_y_extended = np.hstack([comp_plot.y[0], comp_plot.y])
         ax_main.step(
@@ -226,16 +231,20 @@ def fit_and_plot_source():
             linestyle=linestyle,
             label=label,
         )
+        if restored:
+            ui.set_source('SRC_1', full_src_model)
+            ui.get_fit_plot('SRC_1')
 
-    has_inst_label = False
-    for comp in component_plots:
-        name = getattr(comp, 'name', '')
-        if 'SrcAbs' in name and 'SrcNEI' in name:
-            _step_component(comp, 'purple', 'SrcAbs * SrcNEI')
-        elif any(tag in name for tag in ['InstLine_1', 'InstLine_2', 'Src_InstLine_3']):
-            label = 'Instrumental lines' if not has_inst_label else None
-            has_inst_label = True
-            _step_component(comp, '#7f7f7f', label, linestyle='--')
+    _component_curve(SrcAbs * SrcNEI, 'purple', 'SrcAbs * SrcNEI')
+
+    gaussian_components = [
+        (sky_scale_src * InstLine_1, 'Instrumental lines'),
+        (sky_scale_src * InstLine_2, None),
+        (Src_InstLine_3, None),
+    ]
+
+    for comp_expr, lbl in gaussian_components:
+        _component_curve(comp_expr, '#7f7f7f', lbl, linestyle='--')
 
     ax_main.set_xscale('linear')
     ax_main.set_yscale('log')
