@@ -116,40 +116,29 @@ def fit_and_plot_source():
         label='Full model',
     )
 
-    # Individual component curves extracted from the model histogram
-    tbabs_vnei_comp = None
-    gaussian_comp = None
+    pha_data = ui.get_data('SRC_1')
+    mask = getattr(pha_data, 'mask', None)
 
-    for comp in getattr(m, 'components', []):
-        comp_name = getattr(comp, 'name', '')
-        if 'SrcAbs' in comp_name and 'SrcNEI' in comp_name:
-            tbabs_vnei_comp = comp
-        elif 'Src_InstLine_3' in comp_name:
-            gaussian_comp = comp
-
-    if tbabs_vnei_comp is not None:
-        tbabs_vnei_edge = np.hstack([tbabs_vnei_comp.xlo[0], tbabs_vnei_comp.xhi])
-        tbabs_vnei_y = np.hstack([tbabs_vnei_comp.y[0], tbabs_vnei_comp.y])
+    def _component_curve(component, color, label):
+        comp_obj = ui.calc_model_component('SRC_1', component)
+        comp_vals = np.asarray(getattr(comp_obj, 'y', comp_obj))
+        if mask is not None:
+            comp_vals = comp_vals[mask]
+        if comp_vals.size == 0:
+            return
+        comp_edge = np.hstack([m.xlo[0], m.xhi])
+        comp_y_extended = np.hstack([comp_vals[0], comp_vals])
         ax_main.step(
-            tbabs_vnei_edge,
-            tbabs_vnei_y,
+            comp_edge,
+            comp_y_extended,
             where='pre',
-            color='#d62728',
+            color=color,
             linewidth=1.4,
-            label='SrcAbs * SrcNEI',
+            label=label,
         )
 
-    if gaussian_comp is not None:
-        gaussian_edge = np.hstack([gaussian_comp.xlo[0], gaussian_comp.xhi])
-        gaussian_y = np.hstack([gaussian_comp.y[0], gaussian_comp.y])
-        ax_main.step(
-            gaussian_edge,
-            gaussian_y,
-            where='pre',
-            color='#2ca02c',
-            linewidth=1.4,
-            label='Src_InstLine_3',
-        )
+    _component_curve(SrcAbs * SrcNEI, '#d62728', 'SrcAbs * SrcNEI')
+    _component_curve(Src_InstLine_3, '#2ca02c', 'Src_InstLine_3')
 
     ax_main.set_xscale('linear')
     ax_main.set_yscale('log')
@@ -172,7 +161,7 @@ def fit_and_plot_source():
     ax_del.axhline(-2, color='r', ls=':', linewidth=0.8)
     ax_del.set_xlabel('Energy (keV)')
     ax_del.set_ylabel('delchi')
-    ax_del.set_ylim(-5, 5)
+    ax_del.set_ylim(-2.2, 2.2)
 
     plt.tight_layout()
     plt.show()
