@@ -116,30 +116,40 @@ def fit_and_plot_source():
         label='Full model',
     )
 
-    # Individual component curves
-    tbabs_vnei = ui.get_model_component_plot('SRC_1', SrcAbs * SrcNEI)
-    tbabs_vnei_edge = np.hstack([tbabs_vnei.xlo[0], tbabs_vnei.xhi])
-    tbabs_vnei_y = np.hstack([tbabs_vnei.y[0], tbabs_vnei.y])
-    ax_main.step(
-        tbabs_vnei_edge,
-        tbabs_vnei_y,
-        where='pre',
-        color='#d62728',
-        linewidth=1.4,
-        label='SrcAbs * SrcNEI',
-    )
+    # Individual component curves extracted from the model histogram
+    tbabs_vnei_comp = None
+    gaussian_comp = None
 
-    gaussian = ui.get_model_component_plot('SRC_1', Src_InstLine_3)
-    gaussian_edge = np.hstack([gaussian.xlo[0], gaussian.xhi])
-    gaussian_y = np.hstack([gaussian.y[0], gaussian.y])
-    ax_main.step(
-        gaussian_edge,
-        gaussian_y,
-        where='pre',
-        color='#2ca02c',
-        linewidth=1.4,
-        label='Src_InstLine_3',
-    )
+    for comp in getattr(m, 'components', []):
+        comp_name = getattr(comp, 'name', '')
+        if 'SrcAbs' in comp_name and 'SrcNEI' in comp_name:
+            tbabs_vnei_comp = comp
+        elif 'Src_InstLine_3' in comp_name:
+            gaussian_comp = comp
+
+    if tbabs_vnei_comp is not None:
+        tbabs_vnei_edge = np.hstack([tbabs_vnei_comp.xlo[0], tbabs_vnei_comp.xhi])
+        tbabs_vnei_y = np.hstack([tbabs_vnei_comp.y[0], tbabs_vnei_comp.y])
+        ax_main.step(
+            tbabs_vnei_edge,
+            tbabs_vnei_y,
+            where='pre',
+            color='#d62728',
+            linewidth=1.4,
+            label='SrcAbs * SrcNEI',
+        )
+
+    if gaussian_comp is not None:
+        gaussian_edge = np.hstack([gaussian_comp.xlo[0], gaussian_comp.xhi])
+        gaussian_y = np.hstack([gaussian_comp.y[0], gaussian_comp.y])
+        ax_main.step(
+            gaussian_edge,
+            gaussian_y,
+            where='pre',
+            color='#2ca02c',
+            linewidth=1.4,
+            label='Src_InstLine_3',
+        )
 
     ax_main.set_xscale('linear')
     ax_main.set_yscale('log')
