@@ -116,18 +116,15 @@ def fit_and_plot_source():
         label='Full model',
     )
 
-    pha_data = ui.get_data('SRC_1')
-    mask = getattr(pha_data, 'mask', None)
-
-    def _component_curve(component, color, label):
-        comp_obj = ui.calc_model_component('SRC_1', component)
-        comp_vals = np.asarray(getattr(comp_obj, 'y', comp_obj))
-        if mask is not None:
-            comp_vals = comp_vals[mask]
-        if comp_vals.size == 0:
+    def _component_curve(component_expr, color, label):
+        ui.set_source('SRC_1', component_expr)
+        comp_plot = ui.get_fit_plot('SRC_1')
+        comp_model = comp_plot.modelplot
+        if comp_model.y.size == 0:
+            ui.set_source('SRC_1', full_src_model)
             return
-        comp_edge = np.hstack([m.xlo[0], m.xhi])
-        comp_y_extended = np.hstack([comp_vals[0], comp_vals])
+        comp_edge = np.hstack([comp_model.xlo[0], comp_model.xhi])
+        comp_y_extended = np.hstack([comp_model.y[0], comp_model.y])
         ax_main.step(
             comp_edge,
             comp_y_extended,
@@ -136,6 +133,8 @@ def fit_and_plot_source():
             linewidth=1.4,
             label=label,
         )
+        ui.set_source('SRC_1', full_src_model)
+        ui.get_fit_plot('SRC_1')  # refresh caches for the full model
 
     _component_curve(SrcAbs * SrcNEI, '#d62728', 'SrcAbs * SrcNEI')
     _component_curve(Src_InstLine_3, '#2ca02c', 'Src_InstLine_3')
