@@ -123,7 +123,7 @@ def _calculate_parameter_errors(param_names, sigma=1.0, outfile='SRC_1_parameter
         upper = None
 
         try:
-            ui.conf(name, sigma=sigma)
+            ui.conf(par, sigma=sigma)
             conf_res = ui.get_conf_results()
             if conf_res is not None and conf_res.parnames:
                 try:
