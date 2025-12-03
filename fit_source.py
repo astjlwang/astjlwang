@@ -76,6 +76,41 @@ def _normalize_param_selection(selection):
     return deduped
 
 
+def _parameter_key(param):
+    """将参数对象或字符串统一转换为 Sherpa 识别的表达式"""
+    if isinstance(param, str):
+        return param
+    for attr in ('fullname', 'full_name'):
+        value = getattr(param, attr, None)
+        if value:
+            return value
+    name = getattr(param, 'name', None)
+    modelname = getattr(param, 'modelname', None)
+    if modelname and name:
+        return f"{modelname}.{name}"
+    if name:
+        return name
+    return str(param)
+
+
+def _build_selected_parameter_lists(selected_param_names):
+    """
+    根据最终选定的字符串名称，构造：
+    - important_params：Sherpa 参数对象（若无法获取，则退回字符串）
+    - param_labels：用于输出展示的字符串
+    """
+    important_params = []
+    param_labels = []
+    for name in selected_param_names:
+        try:
+            important_params.append(ui.get_par(name))
+        except Exception:
+            print(f"警告：无法通过 get_par 获取 {name}，按字符串处理")
+            important_params.append(name)
+        param_labels.append(name)
+    return important_params, param_labels
+
+
 def _resolve_param(model, candidate_names):
     """解析参数名称"""
     for name in candidate_names:
@@ -168,34 +203,34 @@ def _reset_source_initials():
     _set_par_value('InstLine_2.norm', 1e-5, freeze=False)
 
 
-def _calculate_parameter_errors(param_names, sigma=1.0):
+def _calculate_parameter_errors(param_list, sigma=1.0):
     """使用conf计算关键参数的误差"""
     error_results = {}
 
-    for param_name in param_names:
+    for param_entry in param_list:
+        param_expr = _parameter_key(param_entry)
         try:
             # 使用conf计算单个参数的误差
-            ui.conf(param_name)
+            ui.conf(param_expr, sigma=sigma)
             conf_res = ui.get_conf_results()
             best_val = conf_res.parvals[0]
             lower_err = conf_res.parmins[0] if conf_res.parmins[0] is not None else 0
             upper_err = conf_res.parmaxes[0] if conf_res.parmaxes[0] is not None else 0
 
-            error_results[param_name] = {
+            error_results[param_expr] = {
                 'value': best_val,
                 'lower_error': lower_err,
                 'upper_error': upper_err,
                 'lower_bound': best_val + lower_err,
                 'upper_bound': best_val + upper_err,
             }
-            print(f"Warning: Could not find {param_name} in conf results")
 
         except Exception as e:
-            print(f"Error calculating confidence interval for {param_name}: {e}")
+            print(f"Error calculating confidence interval for {param_expr}: {e}")
             # 如果conf失败，尝试使用get_par获取参数值（但没有误差）
             try:
-                par = ui.get_par(param_name)
-                error_results[param_name] = {
+                par = ui.get_par(param_expr)
+                error_results[param_expr] = {
                     'value': par.val,
                     'lower_error': 0,
                     'upper_error': 0,
@@ -203,14 +238,13 @@ def _calculate_parameter_errors(param_names, sigma=1.0):
                     'upper_bound': par.val,
                 }
             except Exception:
-                error_results[param_name] = {
+                error_results[param_expr] = {
                     'value': 0,
                     'lower_error': 0,
                     'upper_error': 0,
                     'lower_bound': 0,
                     'upper_bound': 0,
                 }
-        print(error_results)
 
     return error_results
 
@@ -218,7 +252,8 @@ def _calculate_parameter_errors(param_names, sigma=1.0):
 def _save_fitting_results(
     fit_results,
     error_results,
-    selected_params,
+    important_params,
+    param_names,
     filename='SRC_1_fitting_results.txt',
 ):
     """保存完整的拟合结果到文件"""
@@ -243,17 +278,19 @@ def _save_fitting_results(
         f.write("Parameter\tValue\tLower_Offset\tUpper_Offset\n")
 
         # 写入每个参数的值和误差
-        for param_name in selected_params:
-            if param_name in error_results:
-                param_info = error_results[param_name]
+        for idx, param_entry in enumerate(important_params):
+            label = param_names[idx] if idx < len(param_names) else _parameter_key(param_entry)
+            param_key = _parameter_key(param_entry)
+            if param_key in error_results:
+                param_info = error_results[param_key]
                 f.write(
-                    f"{param_name}\t"
+                    f"{label}\t"
                     f"{param_info['value']:.3g}\t"
                     f"{param_info['lower_error']:.3g}\t"
                     f"{param_info['upper_error']:.3g}\n"
                 )
             else:
-                f.write(f"{param_name}\tNot available\t0\t0\n")
+                f.write(f"{label}\tNot available\t0\t0\n")
 
     print(f"完整的拟合结果已保存到 {filename}")
 
@@ -391,10 +428,11 @@ def fit_source_spectrum(
     print("\n--- Calculating parameter errors using conf ---")
 
     # 计算参数误差
-    error_results = _calculate_parameter_errors(selected_param_names)
+    important_params, param_labels = _build_selected_parameter_lists(selected_param_names)
+    error_results = _calculate_parameter_errors(important_params, sigma=error_sigma)
 
     # 使用第二次拟合的结果保存完整信息
-    _save_fitting_results(stage2_fit, error_results, selected_param_names)
+    _save_fitting_results(stage2_fit, error_results, important_params, param_labels)
 
     # 绘制源拟合结果
     fig = plt.figure(figsize=(8.0, 8.0))
