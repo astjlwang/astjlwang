@@ -1,0 +1,1 @@
+{"data": {"__type": {"kind": "ENUM", "name": "ReportType", "enumValues": [{"name": "uiClickReport", "description": null}, {"name": "searchResultStats", "description": null}, {"name": "suspiciousQueries", "description": null}, {"name": "connectionsStats", "description": null}, {"name": "dataOutStats", "description": null}]}}}
