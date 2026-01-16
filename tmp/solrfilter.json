@@ -1,0 +1,1 @@
+{"data": {"__type": {"kind": "INPUT_OBJECT", "name": "SolrFilterInput", "inputFields": [{"name": "field", "type": {"kind": "NON_NULL", "name": null, "ofType": {"kind": "SCALAR", "name": "String", "ofType": null}}}, {"name": "value", "type": {"kind": "NON_NULL", "name": null, "ofType": {"kind": "SCALAR", "name": "JSON", "ofType": null}}}]}}}
