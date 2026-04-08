@@ -251,6 +251,14 @@ def prepare_soft_proton_helper_dataset(src_id, helper_id, diag_rsp_path, emin, e
 
 
 def extract_component_model_plot(src_id, plot_id, core_model, emin, emax):
+    """
+    为单独某个模型成分生成与主图同单位的 model plot。
+
+    注意：此函数从 src_id 复制数据到 plot_id，然后用 src_id
+    关联的响应包裹 core_model。对于 photon 成分（用主数据集
+    的原始 ARF+RMF），src_id 应传主数据集 ID；对于 SP 成分
+    （用 diag.rsp + unit ARF），src_id 应传 helper_id。
+    """
     safe_delete_data(plot_id)
     ui.copy_data(src_id, plot_id)
     apply_energy_filter(plot_id, emin, emax)
@@ -269,6 +277,23 @@ def extract_component_model_plot(src_id, plot_id, core_model, emin, emax):
 
     safe_delete_data(plot_id)
     return xlo, xhi, y
+
+
+def compute_raw_bknpower(phoindx1, break_e, phoindx2, norm, energies):
+    """
+    直接计算 bknpower 在给定能量点的 photons/keV/cm^2/s 值（不经过任何响应）。
+    用于诊断：验证 broken power law 的理论形状。
+
+    bknpower 公式 (XSPEC 定义):
+        A(E) = K * E^{-Gamma1}                              for E <= E_break
+        A(E) = K * E_break^{Gamma2-Gamma1} * E^{-Gamma2}    for E >  E_break
+    """
+    result = np.empty_like(energies, dtype=float)
+    lo_mask = energies <= break_e
+    hi_mask = ~lo_mask
+    result[lo_mask] = norm * energies[lo_mask] ** (-phoindx1)
+    result[hi_mask] = norm * (break_e ** (phoindx2 - phoindx1)) * energies[hi_mask] ** (-phoindx2)
+    return result
 
 
 # =========================
@@ -351,6 +376,95 @@ def compute_fit_quality(cam):
         quality["error"] = str(e)
 
     return quality
+
+
+def verify_sp_response(cam, helper_id, SP, cfg):
+    """
+    诊断验证 soft proton 的响应设置是否正确。
+
+    检查内容：
+    1. helper dataset 的 RMF 是否是对角矩阵 (diag.rsp)
+    2. helper dataset 的 ARF 是否是 unit ARF (specresp 全为 1)
+    3. bknpower 的理论形状 vs 通过响应后的形状
+    4. 在 break energy 处是否有可见的拐折
+    """
+    print(f"\n--- {cam} SP 响应诊断 ---")
+
+    try:
+        rmf_sp = ui.get_rmf(helper_id)
+    except Exception:
+        rmf_sp = None
+
+    try:
+        arf_sp = ui.get_arf(helper_id)
+    except Exception:
+        arf_sp = None
+
+    if rmf_sp is None:
+        print(f"  [ERROR] helper dataset {helper_id} 没有 RMF!")
+        return False
+
+    if arf_sp is None:
+        print(f"  [ERROR] helper dataset {helper_id} 没有 ARF!")
+        return False
+
+    # 检查 ARF 是否是 unit ARF
+    specresp = np.asarray(arf_sp.specresp, dtype=float)
+    is_unit = np.allclose(specresp, 1.0)
+    print(f"  ARF: specresp 范围 [{specresp.min():.4g}, {specresp.max():.4g}]"
+          f"  {'[OK: unit ARF]' if is_unit else '[WARN: 不是 unit ARF!]'}")
+
+    # 检查 RMF 是否是对角矩阵
+    # diag.rsp 的特征：矩阵应接近对角（每行只有一个非零元素），
+    # 并且 N_GRP 通常全为 1
+    rmf_name = rmf_sp.name if hasattr(rmf_sp, 'name') else str(rmf_sp)
+    is_diag_name = "diag" in str(rmf_name).lower()
+    print(f"  RMF: {rmf_name}  {'[OK: 文件名含 diag]' if is_diag_name else '[INFO: 文件名不含 diag，请确认]'}")
+
+    if hasattr(rmf_sp, 'n_grp'):
+        n_grp = np.asarray(rmf_sp.n_grp)
+        all_one = np.all(n_grp == 1)
+        print(f"  RMF N_GRP: 全为1={all_one}  "
+              f"{'[OK: 对角结构]' if all_one else '[INFO: 非对角结构]'}")
+
+    # 打印 bknpower 当前参数
+    print(f"  bknpower 参数:")
+    print(f"    PhoIndx1 = {SP.PhoIndx1.val:.4f} (break 以下)")
+    print(f"    BreakE   = {SP.BreakE.val:.4f} keV")
+    print(f"    PhoIndx2 = {SP.PhoIndx2.val:.4f} (break 以上)")
+    print(f"    norm     = {SP.norm.val:.6g}")
+
+    # 计算理论 bknpower 在几个关键能量点的值
+    test_energies = np.array([0.5, 1.0, 2.0, 2.9, 3.0, 3.1, 4.0, 5.0, 6.0])
+    test_energies = test_energies[(test_energies >= cfg["emin"]) & (test_energies <= cfg["emax"])]
+    raw_values = compute_raw_bknpower(
+        SP.PhoIndx1.val, SP.BreakE.val, SP.PhoIndx2.val, SP.norm.val, test_energies)
+
+    print(f"  理论 bknpower (不经响应) 在关键能量点的值:")
+    for e, v in zip(test_energies, raw_values):
+        marker = " <-- BREAK" if abs(e - SP.BreakE.val) < 0.15 else ""
+        print(f"    E={e:.1f} keV: {v:.4g} ph/keV/cm2/s{marker}")
+
+    # 计算 break 前后的比值来判断拐折是否明显
+    e_below = SP.BreakE.val - 0.5
+    e_above = SP.BreakE.val + 0.5
+    if e_below >= cfg["emin"] and e_above <= cfg["emax"]:
+        v_below = compute_raw_bknpower(
+            SP.PhoIndx1.val, SP.BreakE.val, SP.PhoIndx2.val, SP.norm.val,
+            np.array([e_below]))[0]
+        v_above = compute_raw_bknpower(
+            SP.PhoIndx1.val, SP.BreakE.val, SP.PhoIndx2.val, SP.norm.val,
+            np.array([e_above]))[0]
+        slope_change = v_below / v_above if v_above > 0 else np.inf
+        delta_gamma = SP.PhoIndx2.val - SP.PhoIndx1.val
+        print(f"  Break 前后斜率变化: Delta_Gamma = {delta_gamma:.3f}")
+        print(f"  F({e_below:.1f})/F({e_above:.1f}) = {slope_change:.3f}")
+        if abs(delta_gamma) < 0.3:
+            print(f"  [INFO] Delta_Gamma < 0.3 → 拐折不明显，这在轻微 SP 污染时是正常的")
+        elif abs(delta_gamma) > 1.0:
+            print(f"  [INFO] Delta_Gamma > 1.0 → 拐折显著")
+
+    return True
 
 
 def print_fit_quality(cam, quality):
@@ -536,6 +650,60 @@ def make_plot(
     plt.close(fig)
 
 
+def make_sp_diagnostic_plot(cam, SP, cfg, outpng_diag):
+    """
+    画出 bknpower 的理论形状（不经过任何响应卷积），
+    让 break energy 处的拐折清晰可见。同时标注拟合参数。
+    """
+    emin, emax = cfg["emin"], cfg["emax"]
+    energies = np.linspace(emin, emax, 500)
+
+    raw = compute_raw_bknpower(
+        SP.PhoIndx1.val, SP.BreakE.val, SP.PhoIndx2.val, SP.norm.val, energies)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
+
+    # 左图: log-log
+    ax1.plot(energies, raw, color="#FF1493", linewidth=2)
+    ax1.axvline(SP.BreakE.val, color="gray", linestyle="--", linewidth=1,
+                label=f"Break = {SP.BreakE.val:.2f} keV")
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax1.set_xlabel("Energy (keV)")
+    ax1.set_ylabel(r"$A(E)$ [ph/keV/cm$^2$/s]")
+    ax1.set_title(f"{cam} bknpower (raw, no response)")
+    ax1.legend(fontsize=9)
+    ax1.grid(alpha=0.3)
+
+    info_text = (
+        f"$\\Gamma_1$ = {SP.PhoIndx1.val:.3f}\n"
+        f"$E_{{break}}$ = {SP.BreakE.val:.2f} keV\n"
+        f"$\\Gamma_2$ = {SP.PhoIndx2.val:.3f}\n"
+        f"norm = {SP.norm.val:.4g}\n"
+        f"$\\Delta\\Gamma$ = {SP.PhoIndx2.val - SP.PhoIndx1.val:.3f}"
+    )
+    ax1.text(0.97, 0.97, info_text, transform=ax1.transAxes,
+             fontsize=9, verticalalignment="top", horizontalalignment="right",
+             bbox=dict(boxstyle="round,pad=0.3", facecolor="wheat", alpha=0.8))
+
+    # 右图: E^2 * A(E) (nu F_nu 表示，让 break 更明显)
+    ef2 = energies ** 2 * raw
+    ax2.plot(energies, ef2, color="#FF1493", linewidth=2)
+    ax2.axvline(SP.BreakE.val, color="gray", linestyle="--", linewidth=1,
+                label=f"Break = {SP.BreakE.val:.2f} keV")
+    ax2.set_xscale("log")
+    ax2.set_yscale("log")
+    ax2.set_xlabel("Energy (keV)")
+    ax2.set_ylabel(r"$E^2 \cdot A(E)$ [keV$\cdot$ph/cm$^2$/s]")
+    ax2.set_title(f"{cam} bknpower $\\times E^2$ (break more visible)")
+    ax2.legend(fontsize=9)
+    ax2.grid(alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(outpng_diag, dpi=150)
+    plt.close(fig)
+
+
 # =========================
 # 核心拟合
 # =========================
@@ -673,6 +841,9 @@ def fit_one_camera(cam, cfg):
     ui.fit(cam)
     safe_show_model(cam)
 
+    # 10b) SP 响应诊断
+    verify_sp_response(cam, helper_id, SP, cfg)
+
     # 11) 拟合质量
     quality = compute_fit_quality(cam)
     print_fit_quality(cam, quality)
@@ -698,6 +869,13 @@ def fit_one_camera(cam, cfg):
             plot_error = repr(exc)
             outpng = None
             print(f"  [WARN] 绘图失败: {plot_error}")
+
+        try:
+            outpng_diag = os.path.join(OUTDIR, f"sp_diagnostic_{cam}.png")
+            make_sp_diagnostic_plot(cam, SP, cfg, outpng_diag)
+            print(f"  [INFO] SP diagnostic plot saved: {outpng_diag}")
+        except Exception as exc:
+            print(f"  [WARN] SP 诊断图绘制失败: {exc}")
     else:
         outpng = None
 
