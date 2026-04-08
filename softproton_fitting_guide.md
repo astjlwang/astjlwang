@@ -4,8 +4,9 @@
 1. [各成分在不同能段的物理主导性](#1-各成分在不同能段的物理主导性)
 2. [高能段低信噪比的处理方法](#2-高能段低信噪比的处理方法)
 3. [ESAS proton 命令中 bnorm 的物理含义与合理范围](#3-esas-proton-命令中-bnorm-的物理含义与合理范围)
-4. [如何判断拟合是否正确](#4-如何判断拟合是否正确)
-5. [参考文献](#5-参考文献)
+4. [三个探测器间 SP 污染的一致性](#4-三个探测器间-sp-污染的一致性)
+5. [如何判断拟合是否正确](#5-如何判断拟合是否正确)
+6. [参考文献](#6-参考文献)
 
 ---
 
@@ -223,7 +224,65 @@ A(E) = K * BreakE^{PhoIndx2 - PhoIndx1} * E^{-PhoIndx2}   for E > BreakE
 
 ---
 
-## 4. 如何判断拟合是否正确
+## 4. 三个探测器间 SP 污染的一致性
+
+### 4.1 核心结论：三个探测器一定同时受 SP 污染，但 bnorm 可以差别很大
+
+**不会出现**"一个探测器有 SP 污染、另外两个没有"的情况。soft proton 来自地球磁层环境中的低能质子，通过三台望远镜的光学系统聚焦到三个探测器上。因为三台望远镜同时指向同一方向、处于同一磁层环境中，所以**如果有 SP 污染，三个探测器都会受到影响**。
+
+但是——**它们的 bnorm 可以有显著差异**，原因如下：
+
+### 4.2 MOS1 vs MOS2：bnorm 可以不同但应在同一量级
+
+- **早期（2001-2002 年）**: MOS1 和 MOS2 的 SP 计数率很接近。
+- **后期（2019-2020 年）**: 由于 MOS1 损失了两个 CCD（微陨石撞击），MOS1 的有效面积下降了 ~30%。更严重的是，MOS2 的有效面积由于探测器表面沉积物已下降了 ~70%（Gastaldello et al. 2024, A&A 691, A230）。
+- **实际影响**: 在早期观测中，MOS1 和 MOS2 的 bnorm 应该很接近（差异 < 10-20%）；在较新的观测中，MOS2 的 bnorm 可能明显低于 MOS1（因为 MOS2 对 SP 的有效响应下降更多）。
+- **Kuntz & Snowden (2008) 的建议**: "We have found that the normalization and power law indices for the soft proton contamination are **similar but not identical** for the two detectors." 可以在初始拟合时 link 两个 MOS 的参数，然后在精细拟合时解开。
+- **系统误差**: 两个 MOS 之间的系统误差约 3%（Gastaldello et al. 2024）。
+
+### 4.3 MOS vs PN：bnorm 差异可以很大（factor of 2-5）
+
+MOS 和 PN 对 SP 的响应**完全不同**，原因有：
+
+1. **探测器结构不同**: PN 是背照式 (back-illuminated) CCD，MOS 是前照式 (front-illuminated)。质子在两种 CCD 中的能量沉积方式不同。
+2. **有效面积不同**: PN 对 SP 的有效面积曲线形状与 MOS 完全不同（见 Fioretti et al. 2024 的 Fig. 1），PN 在低能端更高。
+3. **RGS 的遮挡**: MOS 望远镜后面有 RGS 光栅，遮挡了约 50% 的聚焦 SP 通量；PN 望远镜没有 RGS，接收全部 SP 通量。
+4. **滤光片不同**: 不同的光学阻隔滤光片（thin/medium/thick）对 SP 的衰减不同。
+5. **系统误差**: MOS 和 PN 之间的系统误差约 **24%**（Gastaldello et al. 2024）。
+
+因此：**PN 的 bnorm 与 MOS 的 bnorm 差别可以很大**（典型地差 2-5 倍甚至更多），这是完全正常的。ESAS cookbook 明确说："the pn 'sees' a very different spectral shape than the MOS detectors, so it can't be linked to the MOS."
+
+### 4.4 什么情况是不合理的？
+
+| 场景 | 是否合理 | 说明 |
+|---|---|---|
+| MOS1 bnorm=2e-3, MOS2 bnorm=3e-3, PN bnorm=5e-4 | 合理 | MOS 接近，PN 不同但同一量级 |
+| MOS1 bnorm=1e-3, MOS2 bnorm=1.5e-3, PN bnorm=5e-3 | 合理 | PN 接收更多 SP（无 RGS 遮挡） |
+| MOS1 bnorm=2e-3, MOS2 bnorm=2e-3, PN bnorm=1e-6 | **可能有问题** | PN 几乎为零而 MOS 有显著污染 |
+| MOS1 bnorm=1e-6, MOS2 bnorm=2e-3, PN bnorm=1e-3 | **可能有问题** | MOS1 和 MOS2 差了 3 个量级 |
+| MOS1 bnorm=5e-6, MOS2 bnorm=3e-6, PN bnorm=1e-6 | 合理 | 三个都非常小，可能观测确实很干净 |
+| MOS1 bnorm=0.01, MOS2 bnorm=0.008, PN bnorm=0.02 | 合理 | 三个都较大，严重污染 |
+
+### 4.5 实际判断规则
+
+1. **MOS1 和 MOS2 应在同一量级**（差异通常 < factor of 2-3）。如果一个是 10^{-6} 另一个是 10^{-3}，说明拟合出了问题——可能是某个成分（如 CXB 或 MWhalo）在与 SP 发生简并。
+2. **PN 可以与 MOS 差很多**，但方向应该一致——如果 MOS 有明显 SP 污染，PN 也应该有（只是量不同）。如果 MOS 的 bnorm 在 10^{-3} 量级而 PN 几乎为零（< 10^{-6}），需要检查 PN 的拟合是否把 SP 的贡献错误地分配给了其他成分。
+3. **所有探测器的 SP 指数也应该"合理"**: MOS 的 PhoIndx1 典型 0.1-1.4，PN 可能不同但不应该差太离谱。如果某个探测器的指数跑到了极端值（如 < 0 或 > 3），可能需要冻结到合理值。
+
+### 4.6 为什么会出现"看起来不一致"的拟合结果？
+
+最常见的原因是**成分简并 (degeneracy)**：
+
+- SP 的连续谱与 CXB 的幂律在 2-5 keV 能段形状相似，拟合器可能把 SP 的贡献分配给 CXB（或反过来），导致某个探测器的 bnorm 不合理。
+- 解决办法：
+  1. 固定 CXB norm 和 index 到文献值
+  2. 加入 ROSAT 全天调查 (RASS) 谱作为低能约束
+  3. 先在 MOS1/MOS2 之间 link SP 参数做初步拟合，然后解开
+  4. 在外围区域（远离源）拟合 SP，然后用 `sppartial` 缩放到全 FOV
+
+---
+
+## 5. 如何判断拟合是否正确
 
 ### 4.1 统计检验
 
@@ -278,10 +337,12 @@ A(E) = K * BreakE^{PhoIndx2 - PhoIndx1} * E^{-PhoIndx2}   for E > BreakE
 
 ---
 
-## 5. 参考文献
+## 6. 参考文献
 
 1. **Kuntz, K. D. & Snowden, S. L.** (2008). "The EPIC-MOS particle-induced background spectra." A&A 478, 575. — soft proton 谱形的系统研究，broken power law 参数范围
 2. **Snowden, S. L. et al.** (2008). "A catalog of galaxy clusters observed by XMM-Newton." A&A 478, 615. — ESAS 拟合方法示范，各成分初始值
 3. **De Luca, A. & Molendi, S.** (2004). "The 2–8 keV cosmic X-ray background spectrum." A&A 421, 1065. — CXB 谱形和 SP 残余的诊断
 4. **Snowden, S. L. & Kuntz, K. D.** (2025). "ESAS Cookbook, SAS V22." — 拟合策略和模型设置的权威指南
 5. **Henley, D. B. & Shelton, R. L.** (2013). "An XMM-Newton Survey of the SXRB. III." ApJ 773, 92. — 银河晕 X 射线发射的系统测量
+6. **Gastaldello, F. et al.** (2024). "Unveiling the origin of XMM-Newton soft proton flares - II. Systematics in the proton spectral analysis." A&A 691, A230. — 三个探测器间 SP 响应的系统差异和互校准
+7. **Kronberg, E. A. et al.** (2020). "Prediction and Understanding of Soft-proton Contamination in XMM-Newton: A Machine Learning Approach." ApJ 903, 89. — SP 污染与磁层环境的关系
