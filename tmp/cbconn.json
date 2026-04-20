@@ -1,0 +1,1 @@
+{"data": {"__type": {"name": "CaptureBlocksConnection", "kind": "OBJECT", "fields": [{"name": "records", "type": {"kind": "NON_NULL", "name": null, "ofType": {"kind": "LIST", "name": null, "ofType": {"kind": "NON_NULL", "name": null}}}}, {"name": "pageInfo", "type": {"kind": "NON_NULL", "name": null, "ofType": {"kind": "OBJECT", "name": "PageInfo", "ofType": null}}}]}}}

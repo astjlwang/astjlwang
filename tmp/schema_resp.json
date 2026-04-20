@@ -1,0 +1,1 @@
+{"data": {"__schema": {"queryType": {"name": "Query", "fields": [{"name": "eventlog"}, {"name": "report"}, {"name": "captureBlock"}, {"name": "captureBlocks"}, {"name": "exports"}, {"name": "sessions"}, {"name": "systemInfo"}, {"name": "users"}, {"name": "submissions"}, {"name": "proposals"}]}}}}

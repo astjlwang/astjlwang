@@ -1,0 +1,1 @@
+{"data": {"__type": {"inputFields": [{"name": "type", "type": {"kind": "NON_NULL", "name": null, "ofType": {"kind": "ENUM", "name": "ReportType", "ofType": null}}}]}}}
