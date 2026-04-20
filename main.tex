@@ -1,0 +1,776 @@
+\documentclass[UTF8,a4paper]{ctexart}
+
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{siunitx}
+\usepackage{physics}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=2.2cm}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+
+% ---------- 常用宏 ----------
+\newcommand{\kb}{k_{\mathrm B}}
+\newcommand{\Teff}{T_{\mathrm{eff}}}
+\newcommand{\Lsun}{L_\odot}
+\newcommand{\Msun}{M_\odot}
+\newcommand{\Rsun}{R_\odot}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\J}{\mathcal{J}}
+\newcommand{\Hh}{\mathcal{H}}
+\newcommand{\Kk}{\mathcal{K}}
+
+\title{恒星大气物理：核心概念与推导（复习笔记）}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{光度（Luminosity）}
+\subsection*{定义与物理意义}
+光度 \(L\) 是天体向所有方向辐射（或输出）能量的总功率：
+\begin{equation}
+L \equiv \frac{\dd E}{\dd t}\,.
+\end{equation}
+它是恒星的“总能量预算”指标：与内部能量产生（核反应）和外层能量输运（辐射/对流）共同决定恒星在演化轨道上的位置。
+
+\subsection*{与通量、半径的关系}
+若在距离 \(r\) 处测得辐射通量 \(F(r)\)（单位面积单位时间的能流），在各向同性近似下：
+\begin{equation}
+L = 4\pi r^2 F(r)\,.
+\end{equation}
+在恒星表面 \(r=R\)：
+\begin{equation}
+L = 4\pi R^2 F_{\rm surf}\,.
+\end{equation}
+
+\subsection*{天文学意义}
+\begin{itemize}
+  \item \textbf{距离标尺}：与视亮度结合可定义绝对星等与距离模数。
+  \item \textbf{结构约束}：主序星满足近似 \(L\!\sim\! M^\alpha\)（\(\alpha\approx 3\text{--}4\)），反映内部能量产生与不透明度的综合效应。
+  \item \textbf{大气建模边界条件}：大气模型最终要匹配给定 \(L\)（或 \(\Teff\)），保证能量守恒。
+\end{itemize}
+
+\section{有效温度（Effective Temperature）}
+\subsection*{定义}
+有效温度 \(\Teff\) 由“同光度同半径的黑体”定义：
+\begin{equation}
+L \equiv 4\pi R^2 \sigma \Teff^4\,,
+\end{equation}
+因此
+\begin{equation}
+\Teff = \left(\frac{L}{4\pi R^2\sigma}\right)^{1/4}.
+\end{equation}
+
+\subsection*{物理意义}
+\(\Teff\) 不是大气任一点的真实气体温度，而是把观测到的总辐射能流（频率积分后的通量）映射为黑体温度的“等效参数”。谱能量分布形状（\(\lambda_{\rm peak}\)）、电离/激发平衡（Saha/玻尔兹曼）都强烈依赖 \(\Teff\)。
+
+\subsection*{与颜色温度、亮温的区别}
+\begin{itemize}
+  \item \textbf{颜色温度}：用谱形（例如两段波段比色）拟合的温度，受谱线/消光影响。
+  \item \textbf{亮温}：用某一频率处的比强度等效为黑体得到的温度，常用于射电。
+  \item \textbf{有效温度}：由频率积分后的总通量定义，最接近能量守恒量。
+\end{itemize}
+
+\section{赫罗图（H--R 图）}
+\subsection*{坐标与基本结构}
+赫罗图以 \(\log \Teff\)（或颜色指数）为横轴、\(\log L\)（或绝对星等）为纵轴，揭示恒星族群的分布规律：主序、巨星支、白矮、水平支等。
+
+\subsection*{与大气物理的连接}
+从观测到的光谱/颜色推回 \(\Teff\)、表面重力 \(g\) 与金属丰度 \([\mathrm{Fe/H}]\)，再映射到 \(L\) 与演化状态。大气中\textbf{连续谱与线谱形成}决定了温度刻度与重力敏感线（如压强展宽）如何被测量。
+
+\subsection*{天文学意义}
+\begin{itemize}
+  \item \textbf{演化诊断}：同一星团的转折点给出年龄；巨星支形态与金属丰度相关。
+  \item \textbf{恒星参数反演}：通过 \(L\) 与 \(\Teff\) 得到 \(R\)，结合 \(g=GM/R^2\) 得到质量尺度。
+\end{itemize}
+
+\section{热动平衡状态（Thermodynamic Equilibrium, TE）}
+\subsection*{定义}
+严格热动平衡要求：物质与辐射场处处具有同一温度 \(T\)，各微观过程满足\textbf{详细平衡}（forward rate = reverse rate），辐射场为各向同性黑体：
+\begin{equation}
+I_\nu = B_\nu(T),\qquad J_\nu=B_\nu(T).
+\end{equation}
+此时粒子速度分布为 Maxwell 分布，能级布居为玻尔兹曼分布，电离由 Saha 公式给出。
+
+\subsection*{为何恒星大气通常不满足 TE}
+恒星大气是\textbf{开放系统}：能量向外逃逸，辐射场随深度变化且非各向同性；外层密度低，碰撞不足以强制“物质与辐射完全耦合”，导致非局部热动平衡（NLTE）效应。
+
+\subsection*{天文学意义}
+TE 是推导 Saha/玻尔兹曼/普朗克与灰大气的基准极限；理解“偏离 TE 的方向与原因”是 NLTE 谱线形成的核心。
+
+\section{Saha 公式（电离平衡）}
+\subsection*{要解决的问题}
+给定温度 \(T\) 与电子密度 \(n_e\)（或压强），求元素在相邻电离态 \(i\leftrightarrow i{+}1\) 之间的数密度比：
+\(\,n_{i+1}/n_i\)。
+
+\subsection*{结果（常用形式）}
+设电离能为 \(\chi_i\)（从 \(i\) 到 \(i{+}1\)），配分函数为 \(U_i(T)\)。Saha 方程：
+\begin{equation}
+\frac{n_{i+1}n_e}{n_i}
+=
+\frac{2U_{i+1}(T)}{U_i(T)}
+\left(\frac{2\pi m_e \kb T}{h^2}\right)^{3/2}
+\exp\!\left(-\frac{\chi_i}{\kb T}\right).
+\label{eq:saha}
+\end{equation}
+
+\subsection*{推导要点（由化学势/统计力学得到）}
+在 TE 中，相邻反应
+\[
+\mathrm{X}^{i} \rightleftharpoons \mathrm{X}^{i+1} + e^-
+\]
+满足化学势平衡
+\begin{equation}
+\mu_i = \mu_{i+1} + \mu_e.
+\end{equation}
+对理想气体组分，\(\mu\) 可写为
+\begin{equation}
+\mu = -\kb T \ln\!\left[\frac{U(T)}{n}\left(\frac{2\pi m\kb T}{h^2}\right)^{3/2}\right],
+\end{equation}
+其中 \(U\) 代表内部分配函数（含简并度与激发态贡献）。把 \(\mu_i,\mu_{i+1},\mu_e\) 代入并整理，同时把电离能 \(\chi_i\) 作为内能差写入指数项，即得式 \eqref{eq:saha}。
+
+\subsection*{物理解释}
+\begin{itemize}
+  \item \textbf{指数项} \(\exp(-\chi_i/\kb T)\)：温度越高越易电离。
+  \item \textbf{相空间因子} \(\left(2\pi m_e \kb T/h^2\right)^{3/2}\)：自由电子平动状态数随 \(T^{3/2}\) 增加。
+  \item \textbf{电子密度}：\(n_e\) 越大，复合越强，电离度越低（对固定总粒子数）。
+\end{itemize}
+
+\subsection*{天文学意义}
+电离平衡决定谱线来自哪一电离态（例如 Fe\,I vs Fe\,II），从而使得谱线强度对 \(T\)、\(n_e\)、\(g\) 具有诊断能力（常用“电离平衡”定标表面重力）。
+
+\section{玻尔兹曼分布（激发平衡）}
+\subsection*{结果}
+同一电离态 \(i\) 内，不同激发能级 \(j\) 的布居满足：
+\begin{equation}
+\frac{n_{i,j}}{n_i} = \frac{g_{i,j}}{U_i(T)}\exp\!\left(-\frac{E_{i,j}}{\kb T}\right),
+\label{eq:boltzmann}
+\end{equation}
+其中 \(g_{i,j}\) 为简并度，\(E_{i,j}\) 为相对基态的激发能。
+
+\subsection*{推导要点}
+在 TE 中微观态概率 \(p_s \propto \exp(-E_s/\kb T)\)。将能级 \(j\) 的简并度 \(g_j\) 计入，得到 \(n_j \propto g_j \exp(-E_j/\kb T)\)，归一化常数即配分函数 \(U(T)=\sum_j g_j \exp(-E_j/\kb T)\)。
+
+\subsection*{物理与天文学意义}
+玻尔兹曼分布说明：高激发线（大 \(E_{i,j}\)）对温度极敏感，因此高激发谱线常用于 \(\Teff\) 或温度结构的约束；同时它与 Saha 联合决定“总的可吸收粒子数”。
+
+\section{普朗克分布函数（黑体辐射）}
+\subsection*{结果}
+黑体在温度 \(T\) 的谱辐射亮度（源函数极限）：
+\begin{align}
+B_\nu(T) &= \frac{2h\nu^3}{c^2}\frac{1}{\exp(h\nu/\kb T)-1},\\
+B_\lambda(T) &= \frac{2hc^2}{\lambda^5}\frac{1}{\exp(hc/\lambda\kb T)-1}.
+\end{align}
+
+\subsection*{推导要点（光子占据数）}
+在 TE 中，频率 \(\nu\) 的电磁模每个自由度平均占据数为
+\begin{equation}
+\bar n_\nu = \frac{1}{\exp(h\nu/\kb T)-1}.
+\end{equation}
+单位体积单位频率的模密度为 \(8\pi\nu^2/c^3\)，每个光子能量 \(h\nu\)，得能量密度
+\begin{equation}
+u_\nu = \frac{8\pi h\nu^3}{c^3}\frac{1}{\exp(h\nu/\kb T)-1}.
+\end{equation}
+各向同性辐射场中 \(u_\nu = 4\pi B_\nu/c\)，从而得到 \(B_\nu\)。
+
+\subsection*{常用极限与积分}
+\begin{itemize}
+  \item \textbf{Rayleigh--Jeans}（\(h\nu\ll \kb T\)）：
+  \(B_\nu \approx 2\nu^2\kb T/c^2\)。
+  \item \textbf{Wien}（\(h\nu\gg \kb T\)）：
+  \(B_\nu \approx (2h\nu^3/c^2)\exp(-h\nu/\kb T)\)。
+  \item \textbf{Stefan--Boltzmann}：\(\int_0^\infty B_\nu\,\dd\nu = \sigma T^4/\pi\)。
+  \item \textbf{Wien 位移}：\(\lambda_{\rm peak}T \approx 2.9\times 10^{-3}\,\si{m\,K}\)（按 \(B_\lambda\) 峰值）。
+\end{itemize}
+
+\subsection*{天文学意义}
+普朗克函数是 LTE 下源函数 \(S_\nu\) 的核心（见第 \ref{sec:lte} 节），也决定了连续谱形状、颜色温度以及临边昏暗的深层原因。
+
+\section{吸收系数（Absorption coefficient）}
+\subsection*{定义}
+沿射线方向 \(s\) 的辐射转移：
+\begin{equation}
+\frac{\dd I_\nu}{\dd s} = -\alpha_\nu I_\nu + j_\nu,
+\label{eq:rte_s}
+\end{equation}
+其中 \(\alpha_\nu\) 是\textbf{吸收系数}（单位 \(\si{cm^{-1}}\)），表示单位路径长度上强度的衰减率。
+
+\subsection*{与不透明度、密度的关系}
+天体物理中常用质量不透明度（质量吸收/消光系数）
+\begin{equation}
+\kappa_\nu \equiv \frac{\alpha_\nu}{\rho}\qquad [\si{cm^2\,g^{-1}}],
+\end{equation}
+并把总消光拆为
+\begin{equation}
+\alpha_\nu = \alpha_{\nu}^{\rm abs} + \alpha_{\nu}^{\rm sca}
+\quad\Longleftrightarrow\quad
+\kappa_\nu = \kappa_{\nu}^{\rm abs} + \kappa_{\nu}^{\rm sca}.
+\end{equation}
+有时也定义\textbf{单次相互作用后被“热化”的概率}（热化参数）
+\begin{equation}
+\epsilon_\nu \equiv \frac{\alpha_\nu^{\rm abs}}{\alpha_\nu^{\rm abs}+\alpha_\nu^{\rm sca}},
+\end{equation}
+它控制了散射主导时源函数对 \(J_\nu\) 的依赖（见下一节）。
+
+\subsection*{微观表达}
+\(\alpha_\nu\) 可写为“单位体积中吸收体数密度 \(\times\) 单个粒子的有效截面”之和：
+\begin{equation}
+\alpha_\nu = \sum_k n_k \sigma_{\nu,k},
+\end{equation}
+包含束缚--束缚（线吸收）、束缚--自由（光致电离/连续吸收）、自由--自由（制动辐射吸收）与散射（常以“散射吸收系数” \(\alpha_{\nu,{\rm sca}}\) 计入总消光）。
+
+\subsection*{束缚--束缚（谱线）吸收的常用写法}
+对跃迁 \(l\to u\)，用振子强度 \(f_{lu}\) 表示的线吸收系数常写为
+\begin{equation}
+\alpha_\nu^{\rm line}
+=
+\frac{\pi e^2}{m_e c}\, f_{lu}\,
+n_l\left(1-\frac{g_l n_u}{g_u n_l}\right)\phi(\nu),
+\end{equation}
+括号项是\textbf{受激发射修正}（当布居反转时可为负，对应受激放大/激射条件）。
+
+\subsection*{天文学意义}
+\(\alpha_\nu\) 决定在给定频率处“看见”大气的哪一层（光学深度 \(\tau_\nu\sim 1\)），从而决定连续谱与谱线形成层与对温度/压强/速度场的敏感性。
+
+\section{发射系数（Emission coefficient）}
+\subsection*{定义}
+式 \eqref{eq:rte_s} 中 \(j_\nu\) 为\textbf{发射系数}（单位 \(\si{erg\,s^{-1}\,cm^{-3}\,Hz^{-1}\,sr^{-1}}\)），表示单位体积单位立体角单位频率的自发辐射贡献。
+
+\subsection*{源函数}
+定义源函数
+\begin{equation}
+S_\nu \equiv \frac{j_\nu}{\alpha_\nu}.
+\label{eq:source}
+\end{equation}
+则辐射转移方程可写为
+\begin{equation}
+\frac{\dd I_\nu}{\dd s} = -\alpha_\nu \left(I_\nu - S_\nu\right).
+\end{equation}
+在 LTE 下（见第 \ref{sec:lte} 节）有 \(S_\nu=B_\nu(T)\)（Kirchhoff 定律）。
+
+\subsection*{包含散射时的源函数（常用近似）}
+若把“真正吸收”（会与热库交换能量）与“弹性散射”（只改传播方向/频率很小变化）区分开，在各向同性、相干散射近似下，源函数可写成
+\begin{equation}
+S_\nu = (1-\epsilon_\nu)J_\nu + \epsilon_\nu B_\nu(T),
+\end{equation}
+其中 \(J_\nu\) 是平均强度，\(\epsilon_\nu\) 为上一节定义的热化参数。
+这条式子把“辐射场的非局域性”（通过 \(J_\nu\)）与“局域热化”（通过 \(B_\nu\)）明确分开，是理解散射主导大气（热星电子散射、强线散射）中谱线源函数行为的核心。
+
+\subsection*{天文学意义}
+源函数把“微观辐射产生机制”浓缩成一个量：谱线形成（尤其 NLTE）本质上是理解 \(S_\nu\) 如何偏离 \(B_\nu\)。
+
+\section{光致电离（Photoionization）}
+\subsection*{过程}
+光子能量 \(h\nu\) 大于某能级电离阈值 \(\chi\) 时：
+\[
+\mathrm{X}^{i} + h\nu \rightarrow \mathrm{X}^{i+1} + e^-.
+\]
+它属于束缚--自由（bound-free）过程，是许多波段连续不透明度的重要来源。
+
+\subsection*{光致电离率（把辐射场写进来）}
+对某一初态 \(k\)（阈频 \(\nu_0\)），光致电离速率（单位 \(\si{s^{-1}}\)）常写为
+\begin{equation}
+R_{k\to c} = \int_{\nu_0}^{\infty}\frac{4\pi J_\nu}{h\nu}\,\sigma_{\nu,k}^{\rm bf}\,\dd\nu.
+\end{equation}
+这显示：即使局部温度不高，只要紫外辐射场 \(J_\nu\) 强，仍可能发生\textbf{过电离}（over-ionization），是许多 NLTE 效应的典型来源。
+
+\subsection*{截面与阈值行为}
+光致电离截面 \(\sigma_{\nu}^{\rm bf}\) 在阈值 \(\nu_0=\chi/h\) 以上通常随频率下降（氢样近似 \(\sigma\propto \nu^{-3}\) 量级），并可能存在共振结构。
+
+\subsection*{与反过程的关系}
+反过程为\textbf{辐射复合}（radiative recombination），在 TE/LTE 下二者满足详细平衡，从而保证 Kirchhoff 定律与 Saha 关系一致。
+
+\subsection*{天文学意义}
+\begin{itemize}
+  \item \textbf{连续谱形成}：例如热星紫外区金属光致电离、冷星可见光区 \(\mathrm{H^-}\) 的光致剥离（见第 \ref{sec:cont_sources} 节）。
+  \item \textbf{电离平衡/NLTE}：在外层低密度区，光致电离常主导布居，导致 Saha 偏离与谱线强度变化。
+\end{itemize}
+
+\section{光致激发（Photoexcitation）}
+\subsection*{过程}
+光子诱导从低能级 \(l\) 到高能级 \(u\) 的跃迁（束缚--束缚）：
+\[
+\mathrm{X}(l)+h\nu \rightarrow \mathrm{X}(u),
+\qquad h\nu = E_u - E_l.
+\]
+对应吸收线的基本机制之一。
+
+\subsection*{爱因斯坦系数与吸收}
+跃迁概率可用爱因斯坦 \(B_{lu}\) 表示；线吸收系数常写为
+\begin{equation}
+\alpha_\nu^{\rm line} = \frac{h\nu}{4\pi}\left(n_l B_{lu} - n_u B_{ul}\right)\phi(\nu),
+\label{eq:line_alpha}
+\end{equation}
+其中 \(\phi(\nu)\) 是谱线轮廓函数（见第 \ref{sec:line_profile} 节），括号中的差体现\textbf{受激发射}对净吸收的抵消。
+
+\subsection*{天文学意义}
+光致激发把辐射场与能级布居直接耦合，是 NLTE 的根源之一：辐射场由“远处的层”决定，布居因此具有非局域性。
+
+\section{自由--自由吸收（Free-free / Bremsstrahlung absorption）}
+\subsection*{过程}
+自由电子在离子库仑场中散射时吸收/发射光子：
+\[
+e^- + \mathrm{X}^{i+1} + h\nu \rightleftharpoons e^- + \mathrm{X}^{i+1}.
+\]
+它没有阈值（连续），在高温、长波（红外/射电）往往重要。
+
+\subsection*{基本依赖关系（量级）}
+经典近似下自由--自由不透明度随
+\begin{equation}
+\alpha_\nu^{\rm ff}\propto n_e n_i\, T^{-1/2}\,\nu^{-3}\left(1-\exp\!\left[-\frac{h\nu}{\kb T}\right]\right)\, g_{\rm ff},
+\end{equation}
+其中 \(g_{\rm ff}\) 是 Gaunt 因子（量子修正，量级 \(\sim 1\)）。
+
+\subsection*{对应的自由--自由发射（并与 Kirchhoff 对照）}
+自由--自由发射系数满足（量级）
+\begin{equation}
+j_\nu^{\rm ff}\propto n_e n_i\, T^{-1/2}\,\exp\!\left(-\frac{h\nu}{\kb T}\right)\, g_{\rm ff}.
+\end{equation}
+在 LTE 下可验证 \(j_\nu^{\rm ff}=\alpha_\nu^{\rm ff}B_\nu(T)\)，这正是 Kirchhoff 定律在具体微观过程上的体现。
+
+\subsection*{天文学意义}
+\begin{itemize}
+  \item \textbf{H\,II 区/恒星风射电连续谱}：自由--自由发射与吸收共同决定谱指数。
+  \item \textbf{热星大气/色球}：高温电子使 ff 过程成为重要连续源。
+\end{itemize}
+
+\section{光学深度（Optical depth）}
+\subsection*{定义}
+定义沿路径的光学深度
+\begin{equation}
+\dd \tau_\nu \equiv \alpha_\nu \dd s,
+\qquad
+\tau_\nu(s) = \int_{s}^{\infty}\alpha_\nu \dd s'.
+\end{equation}
+用柱质量 \(m\)（见式 \eqref{eq:hse_m}）也常写成
+\begin{equation}
+\dd \tau_\nu = \kappa_\nu \dd m,
+\end{equation}
+强调“形成深度”与质量柱密度/不透明度之间的联系。
+则辐射转移方程 \eqref{eq:rte_s} 可写为
+\begin{equation}
+\frac{\dd I_\nu}{\dd \tau_\nu} = I_\nu - S_\nu
+\end{equation}
+（符号取决于 \(\tau\) 的积分方向；上式对应 \(\tau\) 向外递减的常用约定）。
+
+\subsection*{物理意义：\(\tau_\nu\sim 1\) 的“可见层”}
+\(\tau_\nu\) 衡量“光子被消光的累积概率”。经验上，某频率的出射辐射主要来自 \(\tau_\nu\approx 1\) 附近的层（更深处被强烈吸收、散射，多次相互作用后才逃逸）。
+
+\subsection*{Eddington--Barbier 近似（非常常用）}
+若源函数 \(S_\nu(\tau_\nu)\) 随深度变化较平滑，则形式解可近似为
+\begin{equation}
+I_\nu(0,\mu)\approx S_\nu(\tau_\nu=\mu),
+\end{equation}
+即“沿方向 \(\mu\) 的出射强度大致等于光学深度 \(\tau_\nu=\mu\) 处的源函数”。这条近似把\textbf{临边昏暗}与\textbf{谱线形成层}的直觉联系变成了可计算关系。
+
+\subsection*{天文学意义}
+\(\tau_\nu\) 提供了从几何深度到“辐射形成深度”的映射，使不同频率/谱线的形成层可比较（连续 vs 线芯 vs 线翼）。
+
+\section{光子的自由程（Mean free path）}
+\subsection*{定义与关系}
+光子平均自由程
+\begin{equation}
+\ell_\nu \equiv \frac{1}{\alpha_\nu}.
+\end{equation}
+因此 \(\Delta\tau_\nu \sim 1\) 对应的几何尺度约为 \(\ell_\nu\)。
+
+\subsection*{物理意义}
+\(\ell_\nu\) 表示光子在发生一次“相互作用事件”（吸收/散射）前可自由传播的典型距离。外层密度降低导致 \(\alpha_\nu\) 下降、\(\ell_\nu\) 上升，辐射场更具非局域性（NLTE 更显著）。
+
+\subsection*{随机游走与扩散近似的尺度}
+在纯散射（或强散射）介质中，光子逃逸近似为随机游走：若从 \(\tau\) 深处出发，典型相互作用次数 \(N\sim \tau^2\)，总路径长度 \(\sim N\ell\)。这解释了为何深层辐射可用扩散近似描述、而外层辐射则需要完整转移方程。
+
+\section{不透明度的微观物理过程（Opacity microphysics）}
+\subsection*{总消光与拆分}
+通常定义总消光系数（不透明度对应的线性形式）
+\begin{equation}
+\alpha_\nu = \alpha_\nu^{\rm abs} + \alpha_\nu^{\rm sca}.
+\end{equation}
+若用质量不透明度 \(\kappa_\nu\)（单位 \(\si{cm^2\,g^{-1}}\)），则 \(\alpha_\nu = \rho\kappa_\nu\)。
+
+\subsection*{主要过程清单}
+\begin{itemize}
+  \item \textbf{束缚--束缚（bound-bound）}：谱线吸收/发射（光致激发与受激发射），决定线谱与线 blanketing。
+  \item \textbf{束缚--自由（bound-free）}：光致电离与辐射复合，决定连续边（如 Balmer jump）与紫外连续不透明度。
+  \item \textbf{自由--自由（free-free）}：制动辐射吸收/发射，常在红外/射电重要。
+  \item \textbf{散射（scattering）}：
+    \begin{itemize}
+      \item \textbf{汤姆孙散射}（自由电子）：近似频率无关，\(\sigma_T=6.65\times10^{-25}\,\si{cm^2}\)。
+      \item \textbf{瑞利散射}（束缚电子）：\(\sigma\propto \lambda^{-4}\)。
+      \item \textbf{线散射}：在谱线频率附近的共振散射。
+    \end{itemize}
+  \item \textbf{分子与尘埃}：低温大气中分子带与尘埃连续不透明度显著（晚型星/褐矮）。
+\end{itemize}
+
+\subsection*{天文学意义}
+不透明度的频率依赖决定温度结构（反演/增温）、能量在谱上的再分配（blanketing）以及不同波段对元素丰度、湍动、重力的敏感性。
+
+\section{恒星大气的基本方程组}
+\subsection*{（1）辐射转移方程}
+沿方向余弦 \(\mu=\cos\theta\)，用平面平行近似的光学深度坐标 \(\tau_\nu\)：
+\begin{equation}
+\mu\frac{\dd I_\nu(\tau_\nu,\mu)}{\dd \tau_\nu} = I_\nu(\tau_\nu,\mu)-S_\nu(\tau_\nu,\mu).
+\label{eq:rte_plane}
+\end{equation}
+
+\subsection*{辐射场的角矩：\(J_\nu,H_\nu,K_\nu\)}
+定义角矩（平面平行）
+\begin{align}
+J_\nu &\equiv \frac{1}{2}\int_{-1}^{1} I_\nu(\mu)\,\dd\mu,\\
+H_\nu &\equiv \frac{1}{2}\int_{-1}^{1} \mu\, I_\nu(\mu)\,\dd\mu,\\
+K_\nu &\equiv \frac{1}{2}\int_{-1}^{1} \mu^2\, I_\nu(\mu)\,\dd\mu.
+\end{align}
+它们与常用物理量的关系是
+\begin{equation}
+F_\nu = 4\pi H_\nu,\qquad
+u_\nu = \frac{4\pi}{c}J_\nu,\qquad
+P_{\nu,{\rm rad}} = \frac{4\pi}{c}K_\nu.
+\end{equation}
+为了从矩方程闭合，需给出 Eddington 因子 \(f_\nu \equiv K_\nu/J_\nu\)（Eddington 近似取 \(f_\nu=1/3\)）。
+
+\subsection*{（2）流体静力平衡（或动量方程）}
+静态、平面平行时
+\begin{equation}
+\frac{\dd P}{\dd z} = -\rho g,
+\end{equation}
+或用柱质量 \(m\equiv \int_z^\infty \rho\,\dd z\)（\(\dd m=-\rho \dd z\)）写为
+\begin{equation}
+\frac{\dd P}{\dd m} = g.
+\label{eq:hse_m}
+\end{equation}
+必要时加入辐射压梯度或动压项（强辐射场、恒星风）。
+
+\subsection*{（3）能量守恒/辐射平衡}
+纯辐射平衡时，总通量（频率积分）守恒：
+\begin{equation}
+F \equiv \int_0^\infty F_\nu\,\dd\nu = \sigma \Teff^4 = \text{const}.
+\label{eq:flux_const}
+\end{equation}
+若有对流，则总通量 \(F=F_{\rm rad}+F_{\rm conv}\)。
+
+\subsection*{辐射平衡的等价“积分形式”}
+由 \(\dd H_\nu/\dd\tau_\nu = J_\nu-S_\nu\)（矩方程）可得辐射平衡条件等价于
+\begin{equation}
+\int_0^\infty \alpha_\nu^{\rm abs}\,\left(J_\nu-S_\nu\right)\,\dd\nu = 0.
+\end{equation}
+在 LTE 下 \(S_\nu=B_\nu(T)\)，上式表示“单位体积的吸收能量率等于发射能量率”（净加热为零）。
+
+\subsection*{（4）物态方程与电离/激发}
+\begin{equation}
+P = \frac{\rho}{\mu m_{\rm H}}\kb T + P_{\rm rad} + \cdots,
+\end{equation}
+并结合 Saha（第 \ref{eq:saha} 式）、玻尔兹曼（第 \ref{eq:boltzmann} 式）或更一般的统计平衡方程（NLTE）。
+
+\subsection*{统计平衡（NLTE 的核心方程）}
+若不强制 Saha/玻尔兹曼，能级布居由统计平衡决定：
+\begin{equation}
+\sum_{j\neq i} n_j P_{ji} = n_i \sum_{j\neq i} P_{ij},
+\end{equation}
+其中 \(P_{ij}=R_{ij}+C_{ij}\) 是从 \(i\to j\) 的总跃迁率（辐射 \(R\) 与碰撞 \(C\)）。这套方程与辐射转移方程 \eqref{eq:rte_plane} 强耦合，构成 NLTE 大气模型的计算难点。
+
+\subsection*{（5）化学组成与电中性}
+给定元素丰度，满足电中性 \(\sum_i Z_i n_i = n_e\)，并与分子平衡（低温）耦合。
+
+\subsection*{边界条件（常用）}
+\begin{itemize}
+  \item \textbf{外边界}：入射辐射 \(I_\nu(\tau_\nu=0,\mu<0)\approx 0\)。
+  \item \textbf{深层}：扩散近似 \(I_\nu \approx B_\nu + \mathcal{O}(\tau_\nu^{-1})\)。
+\end{itemize}
+
+\section{灰大气模型（Grey atmosphere model）}
+\subsection*{基本假设}
+\begin{itemize}
+  \item \textbf{灰不透明度}：质量不透明度 \(\kappa_\nu\) 取为常数 \(\kappa\)（与频率无关）。
+  \item \textbf{平面平行、静态、辐射平衡}：\(F=\sigma \Teff^4\) 常数。
+  \item \textbf{LTE}：源函数 \(S_\nu=B_\nu(T)\)。
+  \item \textbf{闭合近似}：常用 Eddington 近似 \(K=\tfrac{1}{3}J\)。
+\end{itemize}
+灰大气是理解温度结构、临边昏暗的最小模型，也是更复杂 NLTE/非灰模型的参照。
+
+\subsection*{Rosseland 平均与“灰深度”}
+在深层扩散近似下，能量输运更接近“按温度梯度加权的频率平均”。因此常定义 Rosseland 平均不透明度：
+\begin{equation}
+\frac{1}{\kappa_R}
+=
+\frac{\displaystyle \int_0^\infty \frac{1}{\kappa_\nu}\,\frac{\partial B_\nu}{\partial T}\,\dd\nu}
+{\displaystyle \int_0^\infty \frac{\partial B_\nu}{\partial T}\,\dd\nu}.
+\end{equation}
+并以 \(\dd\tau \equiv \kappa_R \dd m\) 定义 Rosseland 光学深度 \(\tau\)。
+灰大气模型把 \(\kappa_\nu\) 近似为常数，相当于 \(\kappa_R\) 也为常数，从而频率积分的方程可以用单一 \(\tau\) 描述。
+
+\subsection*{频率积分后的矩方程}
+对 \eqref{eq:rte_plane} 取角矩并频率积分，得到（略去推导细节）：
+\begin{align}
+\frac{\dd H}{\dd \tau} &= J - S,\\
+\frac{\dd K}{\dd \tau} &= H,
+\end{align}
+其中 \(\tau\) 为 Rosseland 光学深度（灰模型下与频率无关），并且在辐射平衡且 LTE 下 \(S=J\)，因此
+\begin{equation}
+\frac{\dd H}{\dd \tau}=0 \Rightarrow H=\text{const}.
+\end{equation}
+通量 \(F=4\pi H\) 常数。
+
+\section{灰大气模型的温度分布}
+\subsection*{Eddington 近似推导}
+在 LTE 与辐射平衡下，频率积分源函数 \(S=\int S_\nu\,\dd\nu \equiv B=\sigma T^4/\pi\)，并有 \(J=S=B\)。
+由矩方程 \(\dd K/\dd\tau = H\) 积分得
+\begin{equation}
+K(\tau) = H\tau + C.
+\end{equation}
+Eddington 近似给出 \(K=\tfrac{1}{3}J=\tfrac{1}{3}B\)，从而
+\begin{equation}
+\frac{1}{3}B(\tau) = H\tau + C.
+\end{equation}
+将 \(H=F/(4\pi)=\sigma \Teff^4/(4\pi)\)、\(B=\sigma T^4/\pi\) 代入：
+\begin{equation}
+\frac{1}{3}\frac{\sigma T^4}{\pi} = \frac{\sigma \Teff^4}{4\pi}\tau + C.
+\end{equation}
+两边乘以 \(\pi/\sigma\)：
+\begin{equation}
+\frac{1}{3}T^4 = \frac{1}{4}\Teff^4 \tau + C',
+\end{equation}
+即
+\begin{equation}
+T^4(\tau)=\frac{3}{4}\Teff^4\left(\tau+q\right),
+\label{eq:grey_T}
+\end{equation}
+其中常数 \(q\) 由边界条件确定。
+
+\subsection*{表面边界条件与 \(q=2/3\)}
+采用 Eddington 边界条件（半空间、外边界无入射），可得 \(J(0)=2H\)，即
+\[
+\frac{1}{3}J(0)=\frac{2}{3}H.
+\]
+又 \(K(0)=\tfrac{1}{3}J(0)\)，而 \(K(0)=C\)，故 \(C=\tfrac{2}{3}H\)，对应 \(q=2/3\)。
+因此灰大气的经典温度结构为
+\begin{equation}
+T^4(\tau)=\frac{3}{4}\Teff^4\left(\tau+\frac{2}{3}\right).
+\end{equation}
+
+\subsection*{天文学意义}
+\begin{itemize}
+  \item \textbf{形成深度}：连续谱的出射辐射大致采样 \(\tau\sim 1\) 附近，从而 \(T(\tau\!\sim\!1)\approx 1.06\,\Teff\)。
+  \item \textbf{临边昏暗}：由于不同 \(\mu\) 看到不同 \(\tau\) 层，温度随 \(\tau\) 递增导致中心更亮（见下一节）。
+  \item \textbf{局限}：真实大气是非灰的，\(\kappa_\nu\) 变化会引起温度反演、线 blanketing 等。
+\end{itemize}
+
+\section{太阳临边昏暗现象（Limb darkening）}
+\subsection*{现象与直观解释}
+太阳圆盘中心比边缘更亮：边缘视线倾斜（小 \(\mu\)）时，光程更长、更容易在较高更冷的层达到 \(\tau_\nu\sim 1\)，因此出射强度更小。
+
+\subsection*{从形式解出发}
+平面平行下的出射强度（\(\tau=0\) 处，\(\mu>0\)）满足形式解：
+\begin{equation}
+I_\nu(0,\mu)=\frac{1}{\mu}\int_0^\infty S_\nu(\tau_\nu)\,\exp\!\left(-\frac{\tau_\nu}{\mu}\right)\,\dd\tau_\nu.
+\label{eq:formal_solution}
+\end{equation}
+若 \(S_\nu\) 随深度单调增大（通常由温度递增导致），则小 \(\mu\) 的指数权重 \(\exp(-\tau/\mu)\) 更偏向浅层，从而 \(I_\nu(0,\mu)\) 更小。
+
+\subsection*{Eddington--Barbier 直觉：为何“看到的是 \(\tau_\nu\approx\mu\) 的层”}
+把源函数在 \(\tau_\nu=\mu\) 附近做一阶展开并代入 \eqref{eq:formal_solution}，可得近似
+\begin{equation}
+I_\nu(0,\mu)\approx S_\nu(\tau_\nu=\mu),
+\end{equation}
+因此临边昏暗强弱直接由 \(S_\nu(\tau_\nu)\)（LTE 下近似 \(B_\nu[T(\tau_\nu)]\)）的梯度控制。
+由于 \(\kappa_\nu\) 随波长变化，\(\tau_\nu=\mu\) 对应的几何高度也随波长变化，因此\textbf{临边昏暗具有显著的波长依赖}（通常蓝光更强）。
+
+\subsection*{灰大气的一个解析例子（频率积分）}
+在灰大气中 \(S=B\propto T^4\propto (\tau+2/3)\)，因此可近似取
+\begin{equation}
+S(\tau)=S_0 + S_1 \tau,
+\end{equation}
+代入 \eqref{eq:formal_solution} 并积分可得线性临边昏暗形式（频率积分后）：
+\begin{equation}
+I(0,\mu) \propto \left(\mu+\frac{2}{3}\right),
+\qquad
+\Rightarrow\quad
+\frac{I(0,\mu)}{I(0,1)} \approx \frac{\mu+2/3}{1+2/3}.
+\end{equation}
+真实太阳的临边昏暗系数随波长变化（蓝光更强），需要非灰不透明度与真实温度梯度描述。
+
+\subsection*{天文学意义}
+临边昏暗影响凌星光变曲线、恒星半径与行星参数反演；也影响干涉测量的可见度函数与“角直径”定义。
+
+\section{局部热动平衡大气模型（LTE）}
+\label{sec:lte}
+\subsection*{定义}
+LTE 假设：\textbf{物质}在每一点的微观布居由局部温度 \(T(\bm r)\) 决定（Saha+玻尔兹曼成立），并且满足 Kirchhoff 定律：
+\begin{equation}
+S_\nu = B_\nu(T).
+\end{equation}
+但 \textbf{辐射场}不必是黑体：\(J_\nu\neq B_\nu\) 可以成立。
+
+\subsection*{成立条件（经验）}
+\begin{itemize}
+  \item 碰撞过程足够频繁，使能级布居主要由碰撞热化决定（高密度、较深层）。
+  \item 光子平均自由程较短，辐射场更“局域”。
+\end{itemize}
+
+\subsection*{何时失效（NLTE）}
+在外层低密度、强辐射场（紫外）或稀薄等离子体中，辐射跃迁率可超过碰撞率，导致过电离、源函数偏离普朗克函数等 NLTE 效应，从而显著改变谱线强度与轮廓。
+
+\section{氢原子模型}
+\subsection*{氢样能级与简并度}
+在忽略精细结构与外场的最简模型中：
+\begin{equation}
+E_n = -\frac{13.6\,\si{eV}}{n^2},
+\qquad n=1,2,\dots
+\end{equation}
+主量子数 \(n\) 的简并度（含自旋）为 \(g_n=2n^2\)。跃迁频率由能级差决定，形成 Lyman（到 \(n=1\)）、Balmer（到 \(n=2\)）等谱系。
+
+\subsection*{选择定则与谱线}
+电偶极跃迁满足 \(\Delta \ell=\pm 1\) 等选择定则。实际谱线还受精细结构、超精细结构、外场（Zeeman/Stark）与碰撞展宽影响。
+
+\subsection*{在恒星大气中的角色}
+\begin{itemize}
+  \item \textbf{热星}：氢 Balmer 线翼对电子压强敏感，可用于测 \(g\)。
+  \item \textbf{连续边}：Balmer 跳跃与 Lyman 连续强烈影响紫外/蓝端能量分布。
+  \item \textbf{等离子体参量}：氢是最重要的电子供体与碰撞伙伴之一，影响 \(n_e\) 与不透明度。
+\end{itemize}
+
+\section{连续吸收的来源}
+\label{sec:cont_sources}
+\subsection*{主要连续不透明度机制}
+\begin{itemize}
+  \item \textbf{H$^-$ 连续}（晚型星可见光主导）：
+    \begin{itemize}
+      \item \textbf{束缚--自由}：\(\mathrm{H^-}+h\nu\rightarrow \mathrm{H}+e^-\)（光致剥离）。
+      \item \textbf{自由--自由}：\(\mathrm{H}+e^-+h\nu\rightarrow \mathrm{H}+e^-\)（H$^-$ ff）。
+    \end{itemize}
+  \item \textbf{H\,I/He\,I/He\,II 的束缚--自由}：形成 Lyman/Balmer/Paschen 等连续边，热星紫外非常重要。
+  \item \textbf{自由--自由（电子--离子）}：红外/射电、热等离子体重要。
+  \item \textbf{电子散射}：热星与高光度星中可成为重要灰散射源。
+  \item \textbf{分子与尘埃}：低温大气（M 型、褐矮）中分子连续/准连续与尘埃吸收显著。
+\end{itemize}
+
+\subsection*{为何 H$^-$ 如此关键（晚型星）}
+虽然 \(\mathrm{H^-}\) 丰度不高，但在 \(\sim 0.3\text{--}1.6\,\si{\micro m}\) 具有较大的连续截面；并且晚型星光球层温度/电子密度条件使 \(\mathrm{H^-}\) 易形成，从而主导可见光连续谱，直接决定 \(\Teff\) 标定与颜色。
+
+\section{吸收线的产生机制}
+\subsection*{基本图景}
+当某频率处存在束缚--束缚跃迁的强吸收（\(\alpha_\nu\) 在该频率显著增大）时，\(\tau_\nu\sim1\) 的形成层被“抬到”更高、更冷的层，导致该频率的出射强度（或通量）低于连续谱，形成吸收线。
+
+\subsection*{线源函数与 NLTE}
+在线频率处源函数一般为
+\begin{equation}
+S_\nu^{\rm line} = \frac{j_\nu^{\rm line}}{\alpha_\nu^{\rm line}},
+\end{equation}
+在 LTE 下 \(S_\nu^{\rm line}=B_\nu(T)\)，吸收线强度主要由不透明度增强与温度梯度决定；在 NLTE 下 \(S_\nu^{\rm line}\) 可偏离 \(B_\nu\)，出现线核填充、反转甚至发射线。
+
+\subsection*{天文学意义}
+谱线的深度与形状编码了元素丰度、温度结构、压力（展宽）、速度场（多普勒位移/不对称）与磁场（塞曼分裂）。
+
+\section{谱线轮廓（Line profile）}
+\label{sec:line_profile}
+\subsection*{轮廓函数的定义与归一化}
+把线吸收系数写为
+\begin{equation}
+\alpha_\nu^{\rm line} = \alpha_0\,\phi(\nu),
+\qquad
+\int_{-\infty}^{\infty}\phi(\nu)\,\dd\nu = 1,
+\end{equation}
+\(\phi(\nu)\) 描述吸收在频率上的分布。常用变量
+\[
+u\equiv \frac{\nu-\nu_0}{\Delta\nu_D}
+\]
+把频率偏移无量纲化。
+
+\subsection*{热运动导致的多普勒（高斯）轮廓}
+若吸收原子速度分量服从 Maxwell 分布，则频率偏移服从高斯：
+\begin{equation}
+\phi_D(\nu)=\frac{1}{\Delta\nu_D\sqrt{\pi}}\exp\!\left[-\left(\frac{\nu-\nu_0}{\Delta\nu_D}\right)^2\right],
+\end{equation}
+其中多普勒宽度
+\begin{equation}
+\Delta\nu_D=\frac{\nu_0}{c}\sqrt{\frac{2\kb T}{m}+\xi_{\rm turb}^2},
+\end{equation}
+可加入微湍动速度 \(\xi_{\rm turb}\)。
+
+\subsection*{自然展宽与碰撞展宽（洛伦兹翼）}
+有限寿命导致能级不确定性（自然展宽），碰撞导致相位扰动（压强展宽），二者常合并为阻尼常数 \(\Gamma\)：
+\begin{equation}
+\phi_L(\nu)=\frac{1}{\pi}\frac{\gamma}{(\nu-\nu_0)^2+\gamma^2},
+\qquad
+\gamma\equiv \frac{\Gamma}{4\pi}.
+\end{equation}
+
+\section{等值宽度（Equivalent width）}
+\subsection*{定义}
+以连续谱通量 \(F_c\) 为基准，等值宽度定义为“与谱线吸收等面积的矩形宽度”：
+\begin{equation}
+W_\lambda \equiv \int \left(1-\frac{F_\lambda}{F_c}\right)\dd\lambda.
+\label{eq:ew}
+\end{equation}
+若用强度也可定义 \(W_\lambda=\int (1-I_\lambda/I_c)\dd\lambda\)（需明确是通量还是强度）。
+
+\subsection*{物理意义}
+\(W_\lambda\) 将谱线“深度+宽度”的信息压缩成一个标量，对分辨率与展宽细节相对不那么敏感，因此常用于丰度分析与曲线增长（curve of growth）。
+
+\subsection*{曲线增长的三段}
+\begin{itemize}
+  \item \textbf{弱线（线性段）}：\(\tau_0\ll1\)，\(W\propto N\)（吸收原子柱密度/丰度）。
+  \item \textbf{饱和段}：线芯饱和，增加 \(N\) 主要增加宽度，增长变慢（对微湍动敏感）。
+  \item \textbf{阻尼翼段}：洛伦兹翼贡献主导，\(W\) 再次加速增长（对压强展宽敏感）。
+\end{itemize}
+
+\section{谱线致宽机制（Line broadening mechanisms）}
+\subsection*{（1）热多普勒展宽}
+由粒子热运动产生，尺度 \(\Delta\nu_D\propto \sqrt{T/m}\)，轻元素线更宽。
+
+\subsection*{（2）湍动展宽（微/宏湍动）}
+\begin{itemize}
+  \item \textbf{微湍动}：尺度小于光子平均自由程，进入局部吸收系数，等效增加 \(\Delta\nu_D\)。
+  \item \textbf{宏湍动}：尺度大于形成区，主要通过对最终谱线的速度场卷积改变轮廓，不改等值宽度（理想化下）。
+\end{itemize}
+
+\subsection*{（3）自然展宽}
+由激发态寿命 \(\tau\) 有限，\(\Gamma_{\rm nat}\sim 1/\tau\)，形成洛伦兹线翼但通常线芯不主导（除极窄线/低温低压）。
+
+\subsection*{（4）压强（碰撞）展宽}
+与粒子密度相关，常见：
+\begin{itemize}
+  \item \textbf{van der Waals 展宽}：中性粒子碰撞（晚型星重要）。
+  \item \textbf{Stark 展宽}：电子/离子电场扰动（热星、Balmer 线翼尤重要）。
+\end{itemize}
+
+\subsection*{（5）自转、脉动与大尺度速度场}
+自转产生典型“旋转轮廓”并导致线展宽；径向速度场（风、脉动、对流）会造成线的不对称、位移与分裂（P Cygni 等）。
+
+\subsection*{（6）仪器展宽}
+由光谱仪线扩散函数（LSF）决定，观测谱线是天体真实谱线与 LSF 的卷积。
+
+\section{Voigt 轮廓（Voigt profile）}
+\subsection*{定义：高斯与洛伦兹的卷积}
+实际谱线往往同时受多普勒与阻尼展宽，轮廓为卷积：
+\begin{equation}
+\phi_V(\nu)=\int_{-\infty}^{\infty}\phi_D(\nu')\,\phi_L(\nu-\nu')\,\dd\nu'.
+\end{equation}
+用无量纲变量
+\[
+u=\frac{\nu-\nu_0}{\Delta\nu_D},\qquad
+a=\frac{\gamma}{\Delta\nu_D}
+\]
+可写为
+\begin{equation}
+\phi_V(\nu)=\frac{1}{\Delta\nu_D\sqrt{\pi}}\,H(a,u),
+\end{equation}
+其中 Voigt 函数
+\begin{equation}
+H(a,u)=\frac{a}{\pi}\int_{-\infty}^{\infty}\frac{\exp(-y^2)}{(u-y)^2+a^2}\,\dd y
+=\Re\left[w(u+\mathrm{i}a)\right]
+\end{equation}
+（\(w\) 为 Faddeeva 函数）。
+
+\subsection*{近似行为}
+\begin{itemize}
+  \item \textbf{线芯}：\(|u|\lesssim 1\) 时接近高斯；
+  \item \textbf{线翼}：\(|u|\gg 1\) 时呈洛伦兹翼 \(H\sim a/(\sqrt{\pi}u^2)\)。
+\end{itemize}
+
+\subsection*{天文学意义}
+Voigt 轮廓是大气谱线合成的标准输入：线芯诊断温度/微湍动与速度场，线翼诊断压强（重力）与碰撞物理；对高分辨率丰度分析与线形成深度判读至关重要。
+
+\end{document}
+
